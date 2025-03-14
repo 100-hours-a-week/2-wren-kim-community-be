@@ -3,7 +3,6 @@ package ktb.community.be.domain.post.application;
 import ktb.community.be.domain.comment.dao.PostCommentRepository;
 import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
-import ktb.community.be.domain.like.dao.PostLikeRepository;
 import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.post.dto.PostDetailResponseDto;
