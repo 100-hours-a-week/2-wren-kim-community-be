@@ -22,7 +22,6 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostCommentRepository postCommentRepository;
-    private final PostLikeRepository postLikeRepository;
 
     @Transactional(readOnly = true)
     public PostDetailResponseDto getPostDetail(Long postId) {
