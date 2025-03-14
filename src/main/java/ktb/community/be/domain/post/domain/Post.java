@@ -1,6 +1,7 @@
 package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
+import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.Getter;
@@ -9,6 +10,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "post")
@@ -43,4 +46,10 @@ public class Post extends BaseTimeEntity {
     private Integer commentCount = 0;
 
     private LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostImage> images;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostComment> comments = new ArrayList<>();
 }
