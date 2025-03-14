@@ -2,12 +2,16 @@ package ktb.community.be.domain.user.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.global.domain.BaseTimeEntity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user", uniqueConstraints = {
         @UniqueConstraint(name = "unique_email", columnNames = "email"),
         @UniqueConstraint(name = "unique_nickname", columnNames = "nickname")
 })
+@Getter
+@NoArgsConstructor
 public class User extends BaseTimeEntity {
 
     @Id

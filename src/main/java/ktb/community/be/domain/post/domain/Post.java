@@ -2,10 +2,13 @@ package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -39,8 +42,9 @@ public class Post extends BaseTimeEntity {
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
     private Integer viewCount = 0;
 
-    @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
-    private Integer likeCount = 0;
+    // ✅ 좋아요 수를 @Formula로 조회 (별도 쿼리 실행 방지)
+    @Formula("(SELECT COUNT(pl.id) FROM post_like pl WHERE pl.post_id = id AND pl.is_deleted = 0)")
+    private int likeCount;
 
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
     private Integer commentCount = 0;
@@ -48,8 +52,10 @@ public class Post extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostImage> images;
+    @BatchSize(size = 10) // 이미지 10개씩 한 번에 가져옴
+    private List<PostImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 10) // 댓글 10개씩 한 번에 가져옴
     private List<PostComment> comments = new ArrayList<>();
 }
