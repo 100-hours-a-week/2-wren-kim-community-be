@@ -24,4 +24,9 @@ public class PostImage extends BaseTimeEntity {
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0")
     private Boolean isDeleted = false;
+
+    public PostImage(Post post, String imageUrl) {
+        this.post = post;
+        this.imageUrl = imageUrl;
+    }
 }

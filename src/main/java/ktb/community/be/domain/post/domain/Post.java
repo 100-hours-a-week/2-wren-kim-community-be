@@ -58,4 +58,10 @@ public class Post extends BaseTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 10) // 댓글 10개씩 한 번에 가져옴
     private List<PostComment> comments = new ArrayList<>();
+
+    public Post(User author, String title, String content) {
+        this.author = author;
+        this.title = title;
+        this.content = content;
+    }
 }
