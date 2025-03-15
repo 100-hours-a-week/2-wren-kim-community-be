@@ -13,14 +13,14 @@ public class PostCreateResponseDto {
     private Long id;
     private String title;
     private String content;
-    private String authorNickname;
+    private String userNickname;
     private List<String> imageUrls;
 
     public PostCreateResponseDto(Post post, List<PostImage> images) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
-        this.authorNickname = post.getAuthor().getNickname();
+        this.userNickname = post.getUser().getNickname();
         this.imageUrls = images.stream()
                 .map(PostImage::getImageUrl)
                 .collect(Collectors.toList());
