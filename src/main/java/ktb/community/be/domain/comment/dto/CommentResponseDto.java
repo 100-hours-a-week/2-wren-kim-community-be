@@ -12,6 +12,7 @@ public class CommentResponseDto {
     private String content;
     private String authorNickname;
     private String authorProfileImageUrl;
+    private Long parentCommentId;
     private List<CommentResponseDto> replies = new ArrayList<>();
 
     public CommentResponseDto(PostComment comment) {
@@ -19,5 +20,6 @@ public class CommentResponseDto {
         this.content = comment.getContent();
         this.authorNickname = comment.getUser().getNickname();
         this.authorProfileImageUrl = comment.getUser().getProfileImageUrl();
+        this.parentCommentId = comment.getParentComment() != null ? comment.getParentComment().getId() : null;
     }
 }

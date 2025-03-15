@@ -3,6 +3,7 @@ package ktb.community.be.domain.post.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
 import ktb.community.be.domain.post.domain.Post;
+import ktb.community.be.domain.post.domain.PostImage;
 import lombok.Getter;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class PostDetailResponseDto {
     private List<String> imageUrls;
     private List<CommentResponseDto> comments;
 
-    public PostDetailResponseDto(Post post, List<CommentResponseDto> comments) {
+    public PostDetailResponseDto(Post post, List<PostImage> images, List<CommentResponseDto> comments) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
@@ -32,9 +33,10 @@ public class PostDetailResponseDto {
         this.commentCount = post.getCommentCount();
         this.authorNickname = post.getAuthor().getNickname();
         this.authorProfileImageUrl = post.getAuthor().getProfileImageUrl();
-        this.imageUrls = post.getImages().stream()
-                .map(image -> image.getImageUrl())
+        this.imageUrls = images.stream()
+                .map(PostImage::getImageUrl)
                 .collect(Collectors.toList());
+
         this.comments = comments;
     }
 }
