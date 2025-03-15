@@ -69,4 +69,16 @@ public class PostController {
             throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "게시글 수정", description = "게시글을 수정합니다.")
+    @PutMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> updatePost(
+            @PathVariable Long postId,
+            @RequestPart("data") String requestData,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
+
+        postService.updatePost(postId, requestData, images, orderIndexesJson);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }

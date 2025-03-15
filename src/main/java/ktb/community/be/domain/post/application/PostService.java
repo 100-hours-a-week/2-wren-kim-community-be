@@ -1,5 +1,7 @@
 package ktb.community.be.domain.post.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ktb.community.be.domain.comment.dao.PostCommentRepository;
 import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
@@ -11,6 +13,7 @@ import ktb.community.be.domain.post.domain.PostImage;
 import ktb.community.be.domain.post.dto.PostCreateRequestDto;
 import ktb.community.be.domain.post.dto.PostCreateResponseDto;
 import ktb.community.be.domain.post.dto.PostDetailResponseDto;
+import ktb.community.be.domain.post.dto.PostUpdateRequestDto;
 import ktb.community.be.domain.user.dao.UserRepository;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.exception.CustomException;
@@ -35,7 +38,9 @@ public class PostService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
 
-    // 게시글 작성
+    /*
+    게시글 작성
+     */
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images, List<Integer> orderIndexes) {
         User user = userRepository.findById(requestDto.getUserId())
@@ -50,7 +55,9 @@ public class PostService {
         return new PostCreateResponseDto(post, postImages);
     }
 
-    // 게시글 상세 조회
+    /*
+    게시글 상세 조회
+     */
     @Transactional(readOnly = true)
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
@@ -105,5 +112,83 @@ public class PostService {
     // 삭제된 부모 댓글을 처리하는 메서드 (Setter 없이 생성자로 처리)
     private CommentResponseDto createDeletedCommentDto(Long parentId) {
         return new CommentResponseDto(parentId, "삭제된 댓글입니다.");
+    }
+
+    /*
+    게시글 수정
+     */
+    @Transactional
+    public void updatePost(Long postId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        // JSON 데이터를 객체로 변환
+        PostUpdateRequestDto updateRequest = parseUpdateRequestData(requestData);
+
+        // 기존 이미지 조회
+        List<PostImage> existingImages = postImageRepository.findAllByPostId(postId);
+        Map<Long, PostImage> existingImageMap = existingImages.stream()
+                .collect(Collectors.toMap(PostImage::getId, image -> image));
+
+        // 유지할 이미지 ID 리스트
+        List<Long> keepImageIds = updateRequest.getKeepImageIds();
+
+        // Soft Delete할 이미지 리스트 추출
+        List<PostImage> imagesToDelete = existingImages.stream()
+                .filter(image -> keepImageIds == null || !keepImageIds.contains(image.getId()))
+                .toList();
+
+        // Soft Delete 적용 (한 번에 batch update 처리)
+        if (!imagesToDelete.isEmpty()) {
+            for (PostImage image : imagesToDelete) {
+                image.softDelete();
+            }
+            postImageRepository.saveAll(imagesToDelete);
+        }
+
+        // 기존 이미지의 orderIndex 업데이트 최적화
+        if (updateRequest.hasOrderIndexUpdate()) {
+            Map<Long, Integer> orderIndexMap = updateRequest.getOrderIndexMap();
+            for (Map.Entry<Long, Integer> entry : orderIndexMap.entrySet()) {
+                PostImage image = existingImageMap.get(entry.getKey());
+                if (image != null && !image.getOrderIndex().equals(entry.getValue())) {
+                    image.updateOrderIndex(entry.getValue());
+                }
+            }
+        }
+
+        // 변경 사항 있는 기존 이미지만 업데이트
+        postImageRepository.saveAll(existingImages);
+
+        // 새 이미지 추가 (불필요한 INSERT 방지)
+        if (newImages != null && !newImages.isEmpty()) {
+            List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, newImages);
+            List<PostImage> newPostImages = fileStorageService.storeImages(newImages, orderIndexes, post, post.getUser());
+            postImageRepository.saveAll(newPostImages);
+        }
+
+        // 제목과 내용 업데이트
+        post.update(updateRequest.getTitle(), updateRequest.getContent());
+    }
+
+    private PostUpdateRequestDto parseUpdateRequestData(String requestData) {
+        try {
+            return new ObjectMapper().readValue(requestData, PostUpdateRequestDto.class);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
+        }
+    }
+
+    private List<Integer> parseOrderIndexes(String orderIndexesJson, List<MultipartFile> images) {
+        try {
+            if (orderIndexesJson == null || images == null || images.isEmpty()) return List.of();
+            List<Integer> orderIndexes = new ObjectMapper().readValue(orderIndexesJson, List.class);
+            if (orderIndexes.size() != images.size()) {
+                throw new CustomException(ErrorCode.INVALID_REQUEST, "이미지 개수와 orderIndex 개수가 맞지 않습니다.");
+            }
+            return orderIndexes;
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
+        }
     }
 }

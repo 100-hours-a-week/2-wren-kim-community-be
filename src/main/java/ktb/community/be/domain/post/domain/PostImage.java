@@ -61,4 +61,11 @@ public class PostImage extends BaseTimeEntity {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateOrderIndex(int newOrderIndex) {
+        if (!this.orderIndex.equals(newOrderIndex)) {
+            this.orderIndex = newOrderIndex;
+            this.updatedAt = LocalDateTime.now();
+        }
+    }
 }

@@ -80,6 +80,12 @@ public class Post extends BaseTimeEntity {
         this.content = content;
     }
 
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
