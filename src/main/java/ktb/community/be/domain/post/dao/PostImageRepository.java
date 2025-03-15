@@ -8,6 +8,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface PostImageRepository extends JpaRepository<PostImage, Long> {
-    @Query("SELECT i FROM PostImage i WHERE i.post.id = :postId AND i.isDeleted = false")
+    @Query("SELECT i FROM PostImage i WHERE i.post.id = :postId AND i.isDeleted = false ORDER BY i.orderIndex")
     List<PostImage> findAllByPostId(@Param("postId") Long postId);
 }
