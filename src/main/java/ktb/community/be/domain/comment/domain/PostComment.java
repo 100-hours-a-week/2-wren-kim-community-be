@@ -57,7 +57,7 @@ public class PostComment {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();  // 삭제 시점 기준으로 수정 시간도 업데이트
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
