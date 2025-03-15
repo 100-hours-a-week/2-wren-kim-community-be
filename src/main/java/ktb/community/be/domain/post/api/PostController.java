@@ -31,10 +31,13 @@ public class PostController {
     @PostMapping
     public ResponseEntity<ApiResponse<PostCreateResponseDto>> createPost(
             @RequestPart("data") String requestData,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
 
         PostCreateRequestDto requestDto = parseRequestData(requestData);
-        PostCreateResponseDto responseDto = postService.createPost(requestDto, images);
+        List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
+
+        PostCreateResponseDto responseDto = postService.createPost(requestDto, images, orderIndexes);
         return ResponseEntity.ok(ApiResponse.success(responseDto));
     }
 
@@ -48,6 +51,20 @@ public class PostController {
     private PostCreateRequestDto parseRequestData(String requestData) {
         try {
             return objectMapper.readValue(requestData, PostCreateRequestDto.class);
+        } catch (JsonProcessingException e) {
+            throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
+        }
+    }
+
+    private List<Integer> parseOrderIndexes(String orderIndexesJson, List<MultipartFile> images) {
+        try {
+            if (orderIndexesJson == null || images == null || images.isEmpty()) return List.of();
+            List<Integer> orderIndexes = objectMapper.readValue(orderIndexesJson, List.class);
+
+            if (orderIndexes.size() != images.size()) {
+                throw new CustomException(ErrorCode.INVALID_REQUEST, "이미지 개수와 orderIndex 개수가 맞지 않습니다.");
+            }
+            return orderIndexes;
         } catch (JsonProcessingException e) {
             throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
         }
