@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,60 +31,19 @@ public class PostService {
     private final PostCommentRepository postCommentRepository;
     private final PostImageRepository postImageRepository;
     private final UserRepository userRepository;
-
-    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/posts/";
+    private final FileStorageService fileStorageService;
 
     // 게시글 작성
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images) {
-        // ✅ 사용자 검증
         User author = userRepository.findById(requestDto.getAuthorId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        // ✅ 게시글 저장
         Post post = postRepository.save(requestDto.toEntity(author));
-
-        // ✅ 이미지 저장 (로컬 파일 시스템)
-        List<PostImage> postImages = saveImagesLocally(images, post);
+        List<PostImage> postImages = fileStorageService.storeImages(images, post);
         postImageRepository.saveAll(postImages);
 
         return new PostCreateResponseDto(post, postImages);
-    }
-
-    private List<PostImage> saveImagesLocally(List<MultipartFile> images, Post post) {
-        if (images == null || images.isEmpty()) {
-            return List.of();
-        }
-
-        return images.stream().map(image -> {
-            try {
-                String savedFilePath = saveFile(image);
-                return new PostImage(post, savedFilePath);
-            } catch (IOException e) {
-                throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED);
-            }
-        }).collect(Collectors.toList());
-    }
-
-    private String saveFile(MultipartFile file) throws IOException {
-        File uploadDir = new File(UPLOAD_DIR);
-        if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-            throw new IOException("Failed to create upload directory: " + UPLOAD_DIR);
-        }
-
-        String extension = "";
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-
-        String newFileName = UUID.randomUUID().toString() + extension;
-        String filePath = UPLOAD_DIR + File.separator + newFileName;
-
-        File destination = new File(filePath);
-        file.transferTo(destination);
-
-        return filePath;
     }
 
     // 게시글 상세 조회
@@ -94,10 +51,10 @@ public class PostService {
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
-
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
+        List<PostImage> images = postImageRepository.findAllByPostId(postId);
 
-        return new PostDetailResponseDto(post, buildCommentHierarchy(comments));
+        return new PostDetailResponseDto(post, images, buildCommentHierarchy(comments));
     }
 
     private List<CommentResponseDto> buildCommentHierarchy(List<PostComment> comments) {
@@ -106,21 +63,17 @@ public class PostService {
         Map<Long, CommentResponseDto> commentMap = comments.stream()
                 .collect(Collectors.toMap(PostComment::getId, CommentResponseDto::new));
 
-        List<CommentResponseDto> rootComments = new ArrayList<>();
-
+        // 부모-자식 관계 매핑
         comments.forEach(comment -> {
-            CommentResponseDto dto = commentMap.get(comment.getId());
-            if (comment.getParentComment() == null) {
-                rootComments.add(dto);
-            } else {
-                commentMap.computeIfPresent(comment.getParentComment().getId(),
-                        (key, parent) -> {
-                            parent.getReplies().add(dto);
-                            return parent;
-                        });
+            Long parentId = comment.getParentComment() != null ? comment.getParentComment().getId() : null;
+            if (parentId != null) {
+                commentMap.get(parentId).getReplies().add(commentMap.get(comment.getId()));
             }
         });
 
-        return rootComments;
+        // 최상위 댓글만 필터링하여 반환
+        return commentMap.values().stream()
+                .filter(comment -> comment.getParentCommentId() == null)
+                .collect(Collectors.toList());
     }
 }

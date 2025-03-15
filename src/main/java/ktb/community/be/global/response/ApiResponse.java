@@ -9,7 +9,7 @@ public class ApiResponse<T> {
     private final String message;
     private final T data;
 
-    public ApiResponse(HttpStatus status, String message, T data) {
+    private ApiResponse(HttpStatus status, String message, T data) {
         this.status = status.value();
         this.message = message;
         this.data = data;
@@ -19,7 +19,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(HttpStatus.OK, "요청 성공", data);
     }
 
-    public static <T> ApiResponse<T> error(HttpStatus status, String message) {
+    public static ApiResponse<String> error(HttpStatus status, String message) {
         return new ApiResponse<>(status, message, null);
     }
 }
