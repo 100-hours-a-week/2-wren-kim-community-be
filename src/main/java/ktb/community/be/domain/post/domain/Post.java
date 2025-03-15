@@ -2,7 +2,6 @@ package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.comment.domain.PostComment;
-import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.Getter;
@@ -14,11 +13,13 @@ import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "post")
-@SQLDelete(sql = "UPDATE post SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE post SET deleted_at = NOW(), is_deleted = 1 WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Getter
 @NoArgsConstructor
@@ -29,8 +30,8 @@ public class Post extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = true) // User 삭제 시 게시글 유지
-    private User author;
+    @JoinColumn(name = "user_id", nullable = true) // User 삭제 시 게시글 유지
+    private User user;
 
     @Column(length = 255, nullable = false)
     private String title;
@@ -42,26 +43,46 @@ public class Post extends BaseTimeEntity {
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
     private Integer viewCount = 0;
 
-    // 좋아요 수를 @Formula로 조회 (별도 쿼리 실행 방지)
     @Formula("(SELECT COUNT(pl.id) FROM post_like pl WHERE pl.post_id = id AND pl.is_deleted = 0)")
     private int likeCount;
 
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
     private Integer commentCount = 0;
 
+    @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private Boolean isDeleted = false;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = true)
+    private LocalDateTime updatedAt;
+
+    @Column(nullable = true)
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
-    private List<PostImage> images = new ArrayList<>();
+    private Set<PostImage> images = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
-    private List<PostComment> comments = new ArrayList<>();
+    private Set<PostComment> comments = new HashSet<>();
 
-    public Post(User author, String title, String content) {
-        this.author = author;
+    public Post(User user, String title, String content) {
+        this.user = user;
         this.title = title;
         this.content = content;
+    }
+
+    public void softDelete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
