@@ -2,6 +2,7 @@ package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.Getter;
@@ -63,11 +64,15 @@ public class Post extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
-    private Set<PostImage> images = new HashSet<>();
+    @OrderBy("orderIndex ASC")
+    private List<PostImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
-    private Set<PostComment> comments = new HashSet<>();
+    private List<PostComment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PostLike> likes = new HashSet<>();
 
     public Post(User user, String title, String content) {
         this.user = user;
