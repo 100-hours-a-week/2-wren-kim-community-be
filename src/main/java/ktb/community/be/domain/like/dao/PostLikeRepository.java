@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     /*
@@ -16,5 +18,6 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     /*
     게시글 삭제
      */
-    void deleteAllByPostId(Long postId);
+    @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.isDeleted = false")
+    List<PostLike> findAllByPostId(@Param("postId") Long postId);
 }

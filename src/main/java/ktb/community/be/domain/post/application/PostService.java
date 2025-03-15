@@ -6,6 +6,7 @@ import ktb.community.be.domain.comment.dao.PostCommentRepository;
 import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
 import ktb.community.be.domain.like.dao.PostLikeRepository;
+import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.post.dao.PostImageRepository;
 import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
@@ -201,27 +202,28 @@ public class PostService {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        // 게시글의 연관 데이터 조회
+        // 연관된 데이터 조회
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
-        int likeCount = postLikeRepository.countByPostId(postId);
+        List<PostLike> likes = postLikeRepository.findAllByPostId(postId);
 
         // 댓글 Soft Delete
         for (PostComment comment : comments) {
             comment.softDelete();
         }
-        postCommentRepository.saveAll(comments); // Batch Update 처리
+        postCommentRepository.saveAll(comments); // Batch Update
 
         // 이미지 Soft Delete
         for (PostImage image : images) {
             image.softDelete();
         }
-        postImageRepository.saveAll(images); // Batch Update 처리
+        postImageRepository.saveAll(images); // Batch Update
 
-        // 좋아요 Soft Delete (있을 때만 삭제)
-        if (likeCount > 0) {
-            postLikeRepository.deleteAllByPostId(postId); // Soft Delete 적용
+        // 좋아요 Soft Delete (있을 때만 처리)
+        for (PostLike like : likes) {
+            like.softDelete();
         }
+        postLikeRepository.saveAll(likes); // Batch Update
 
         // 게시글 Soft Delete
         post.softDelete();
