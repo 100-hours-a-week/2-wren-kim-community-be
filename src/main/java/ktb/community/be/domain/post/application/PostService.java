@@ -191,4 +191,40 @@ public class PostService {
             throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
         }
     }
+
+    /*
+    게시글 삭제
+    */
+    @Transactional
+    public void deletePost(Long postId) {
+        // 삭제할 게시글 조회 (Soft Delete 적용되지 않은 게시글만)
+        Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        // 게시글의 연관 데이터 조회
+        List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
+        List<PostImage> images = postImageRepository.findAllByPostId(postId);
+        int likeCount = postLikeRepository.countByPostId(postId);
+
+        // 댓글 Soft Delete
+        for (PostComment comment : comments) {
+            comment.softDelete();
+        }
+        postCommentRepository.saveAll(comments); // Batch Update 처리
+
+        // 이미지 Soft Delete
+        for (PostImage image : images) {
+            image.softDelete();
+        }
+        postImageRepository.saveAll(images); // Batch Update 처리
+
+        // 좋아요 Soft Delete (있을 때만 삭제)
+        if (likeCount > 0) {
+            postLikeRepository.deleteAllByPostId(postId); // Soft Delete 적용
+        }
+
+        // 게시글 Soft Delete
+        post.softDelete();
+        postRepository.save(post); // 변경 감지 적용
+    }
 }

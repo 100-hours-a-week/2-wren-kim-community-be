@@ -81,4 +81,11 @@ public class PostController {
         postService.updatePost(postId, requestData, images, orderIndexesJson);
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. (Soft Delete)")
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
+        postService.deletePost(postId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }
