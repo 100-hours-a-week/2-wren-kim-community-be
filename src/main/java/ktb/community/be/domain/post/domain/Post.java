@@ -42,7 +42,7 @@ public class Post extends BaseTimeEntity {
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0")
     private Integer viewCount = 0;
 
-    // ✅ 좋아요 수를 @Formula로 조회 (별도 쿼리 실행 방지)
+    // 좋아요 수를 @Formula로 조회 (별도 쿼리 실행 방지)
     @Formula("(SELECT COUNT(pl.id) FROM post_like pl WHERE pl.post_id = id AND pl.is_deleted = 0)")
     private int likeCount;
 
@@ -52,11 +52,11 @@ public class Post extends BaseTimeEntity {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 10) // 이미지 10개씩 한 번에 가져옴
+    @BatchSize(size = 20)
     private List<PostImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 10) // 댓글 10개씩 한 번에 가져옴
+    @BatchSize(size = 20)
     private List<PostComment> comments = new ArrayList<>();
 
     public Post(User author, String title, String content) {
