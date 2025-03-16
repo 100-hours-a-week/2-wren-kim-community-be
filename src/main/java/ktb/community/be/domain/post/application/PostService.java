@@ -40,7 +40,7 @@ public class PostService {
     private final FileStorageService fileStorageService;
 
     /**
-    게시글 작성
+     * 게시글 작성
      */
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images, List<Integer> orderIndexes) {
@@ -57,12 +57,15 @@ public class PostService {
     }
 
     /**
-    게시글 상세 조회
+     * 게시글 상세 조회
      */
     @Transactional(readOnly = true)
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        post.incrementViewCount();
+        postRepository.save(post);
 
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
@@ -115,7 +118,7 @@ public class PostService {
     }
 
     /**
-    게시글 수정
+     * 게시글 수정
      */
     @Transactional
     public void updatePost(Long postId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
@@ -193,8 +196,8 @@ public class PostService {
     }
 
     /**
-    게시글 삭제
-    */
+     * 게시글 삭제
+     */
     @Transactional
     public void deletePost(Long postId) {
         // 삭제할 게시글 조회 (Soft Delete 적용되지 않은 게시글만)
