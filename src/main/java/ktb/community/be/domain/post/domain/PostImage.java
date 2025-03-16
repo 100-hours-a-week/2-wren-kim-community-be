@@ -3,15 +3,16 @@ package ktb.community.be.domain.post.domain;
 import jakarta.persistence.*;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_image")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class PostImage extends BaseTimeEntity {
 
     @Id
@@ -44,21 +45,20 @@ public class PostImage extends BaseTimeEntity {
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
-    public PostImage(Post post, User user, String imageUrl, Integer orderIndex) {
-        this.post = post;
-        this.user = user;
-        this.imageUrl = imageUrl;
-        this.orderIndex = orderIndex;
+    @PrePersist
+    public void prePersist() {
+        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 

@@ -3,8 +3,7 @@ package ktb.community.be.domain.comment.domain;
 import jakarta.persistence.*;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.user.domain.User;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -17,7 +16,9 @@ import java.util.List;
 @SQLDelete(sql = "UPDATE post_comment SET deleted_at = NOW() WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class PostComment {
 
     @Id
@@ -54,21 +55,16 @@ public class PostComment {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<PostComment> replies = new ArrayList<>();
 
-    public PostComment(Post post, User user, String content) {
-        this.post = post;
-        this.user = user;
-        this.content = content;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
+    @PrePersist
+    public void prePersist() {
+        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
+        this.replies = (this.replies == null) ? new ArrayList<>() : this.replies;
     }
 
-    public PostComment(Post post, User user, String content, PostComment parentComment) {
-        this.post = post;
-        this.user = user;
-        this.content = content;
-        this.parentComment = parentComment;
-        this.createdAt = LocalDateTime.now();
-        this.isDeleted = false;
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateContent(String content) {
@@ -79,11 +75,6 @@ public class PostComment {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 }

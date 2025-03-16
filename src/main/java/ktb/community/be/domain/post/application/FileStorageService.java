@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -37,7 +38,16 @@ public class FileStorageService {
             ensureUploadDirExists();
             String savedFilePath = generateUniqueFilePath(file);
             file.transferTo(new File(savedFilePath));
-            return new PostImage(post, user, savedFilePath, orderIndex);
+
+            return PostImage.builder()
+                    .post(post)
+                    .user(user)
+                    .imageUrl(savedFilePath)
+                    .orderIndex(orderIndex)
+                    .isDeleted(false)  // 기본값 설정
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
         } catch (IOException e) {
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAILED, "파일 저장 실패: " + file.getOriginalFilename());
         }

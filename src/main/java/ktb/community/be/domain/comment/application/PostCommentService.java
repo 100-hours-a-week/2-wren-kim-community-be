@@ -34,9 +34,13 @@ public class PostCommentService {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        PostComment comment = new PostComment(post, user, requestDto.getContent());
-        postCommentRepository.save(comment);
+        PostComment comment = PostComment.builder()
+                .post(post)
+                .user(user)
+                .content(requestDto.getContent())
+                .build();
 
+        postCommentRepository.save(comment);
         updateCommentCount(post);
 
         return new CommentResponseDto(comment);
@@ -54,9 +58,14 @@ public class PostCommentService {
         PostComment parentComment = postCommentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "부모 댓글을 찾을 수 없습니다."));
 
-        PostComment reply = new PostComment(post, user, requestDto.getContent(), parentComment);
-        postCommentRepository.save(reply);
+        PostComment reply = PostComment.builder()
+                .post(post)
+                .user(user)
+                .content(requestDto.getContent())
+                .parentComment(parentComment)
+                .build();
 
+        postCommentRepository.save(reply);
         updateCommentCount(post);
 
         return new CommentResponseDto(reply);

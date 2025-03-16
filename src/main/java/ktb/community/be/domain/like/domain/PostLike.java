@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -14,7 +13,9 @@ import java.time.LocalDateTime;
         @UniqueConstraint(name = "unique_like", columnNames = {"post_id", "user_id"})
 })
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class PostLike extends BaseTimeEntity {
 
     @Id
@@ -45,11 +46,10 @@ public class PostLike extends BaseTimeEntity {
     @Column(length = 20, nullable = true)
     private SoftDeleteType softDeleteType;
 
-    public PostLike(Post post, User user) {
-        this.post = post;
-        this.user = user;
-        this.isDeleted = false;
-        this.softDeleteType = null;
+    @PrePersist
+    public void prePersist() {
+        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
     }
 
     // 사용자가 직접 좋아요 취소

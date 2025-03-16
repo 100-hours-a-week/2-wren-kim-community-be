@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class PostLikeService {
@@ -34,21 +36,25 @@ public class PostLikeService {
         PostLike postLike = postLikeRepository.findByPostIdAndUserId(postId, userId).orElse(null);
 
         if (postLike == null) {
-            // 1️⃣ 기존 좋아요 데이터가 없으면 새로 추가
-            postLike = new PostLike(post, user);
+            postLike = PostLike.builder()
+                    .post(post)
+                    .user(user)
+                    .isDeleted(false)
+                    .softDeleteType(null)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
             postLikeRepository.save(postLike);
-            return true; // 좋아요 추가됨
+            return true;
         } else {
             if (postLike.getIsDeleted()) {
-                // 2️⃣ Soft Delete 된 경우 → 복구
                 postLike.restore();
                 postLikeRepository.save(postLike);
-                return true; // 좋아요 추가됨
+                return true;
             } else {
-                // 3️⃣ 기존 좋아요가 활성화 상태 → Soft Delete 처리
                 postLike.softDeleteByUser();
                 postLikeRepository.save(postLike);
-                return false; // 좋아요 취소됨
+                return false;
             }
         }
     }

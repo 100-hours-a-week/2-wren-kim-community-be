@@ -6,8 +6,7 @@ import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.post.domain.PostImage;
 import ktb.community.be.global.domain.BaseTimeEntity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +17,9 @@ import java.util.List;
         @UniqueConstraint(name = "unique_nickname", columnNames = "nickname")
 })
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class User extends BaseTimeEntity {
 
     @Id
@@ -63,6 +64,13 @@ public class User extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImage> postImages;
+
+    @PrePersist
+    public void prePersist() {
+        this.isActive = (this.isActive == null) ? true : this.isActive;
+        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
+    }
 
     public void softDelete() {
         this.isDeleted = true;

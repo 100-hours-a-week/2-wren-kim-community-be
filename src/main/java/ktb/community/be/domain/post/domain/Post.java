@@ -5,8 +5,7 @@ import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.domain.BaseTimeEntity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.SQLDelete;
@@ -23,7 +22,9 @@ import java.util.Set;
 @SQLDelete(sql = "UPDATE post SET deleted_at = NOW(), is_deleted = 1 WHERE id = ?")
 @Where(clause = "deleted_at IS NULL")
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Post extends BaseTimeEntity {
 
     @Id
@@ -74,10 +75,17 @@ public class Post extends BaseTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PostLike> likes = new HashSet<>();
 
-    public Post(User user, String title, String content) {
-        this.user = user;
-        this.title = title;
-        this.content = content;
+    @PrePersist
+    public void prePersist() {
+        this.viewCount = (this.viewCount == null) ? 0 : this.viewCount;
+        this.commentCount = (this.commentCount == null) ? 0 : this.commentCount;
+        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void update(String title, String content) {
@@ -93,11 +101,6 @@ public class Post extends BaseTimeEntity {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 }
