@@ -10,13 +10,13 @@ import java.util.Optional;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
-    /*
+    /**
     게시글 상세 조회
      */
     @Query("SELECT COUNT(pl) FROM PostLike pl WHERE pl.post.id = :postId AND pl.isDeleted = false")
     int countByPostId(@Param("postId") Long postId);
 
-    /*
+    /**
     게시글 삭제
      */
     @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.isDeleted = false")

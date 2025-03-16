@@ -11,13 +11,13 @@ import java.util.List;
 
 public interface PostImageRepository extends JpaRepository<PostImage, Long> {
 
-    /*
+    /**
     게시글 상세 조회
      */
     @Query("SELECT i FROM PostImage i WHERE i.post.id = :postId AND i.isDeleted = false ORDER BY i.orderIndex")
     List<PostImage> findAllByPostId(@Param("postId") Long postId);
 
-    /*
+    /**
     게시글 수정
      */
     @Modifying

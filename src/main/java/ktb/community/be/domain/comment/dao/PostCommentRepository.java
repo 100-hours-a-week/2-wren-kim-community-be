@@ -16,10 +16,16 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
 //            "ORDER BY c.createdAt ASC")
 //    List<PostComment> findAllByPostId(@Param("postId") Long postId);
 
+    /**
+     * 댓글 전체 조회
+     */
     @Query("SELECT c FROM PostComment c WHERE c.post.id = :postId AND c.deletedAt IS NULL ORDER BY c.createdAt ASC")
     @BatchSize(size = 20)
     List<PostComment> findAllByPostId(@Param("postId") Long postId);
 
+    /**
+     * 댓글 수 업데이트
+     */
     @Query("SELECT COUNT(c) FROM PostComment c WHERE c.post.id = :postId AND c.deletedAt IS NULL")
     int countByPostId(@Param("postId") Long postId);
 }
