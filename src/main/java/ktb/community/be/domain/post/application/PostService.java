@@ -221,7 +221,7 @@ public class PostService {
 
         // 좋아요 Soft Delete (있을 때만 처리)
         for (PostLike like : likes) {
-            like.softDelete();
+            like.softDeleteByPostDeletion();
         }
         postLikeRepository.saveAll(likes); // Batch Update
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
@@ -20,4 +21,10 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
      */
     @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.isDeleted = false")
     List<PostLike> findAllByPostId(@Param("postId") Long postId);
+
+    /**
+     * 특정 사용자와 게시글에 대한 좋아요 조회 (Soft Delete 포함)
+     */
+    @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.user.id = :userId")
+    Optional<PostLike> findByPostIdAndUserId(@Param("postId") Long postId, @Param("userId") Long userId);
 }
