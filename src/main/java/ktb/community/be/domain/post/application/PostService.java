@@ -39,7 +39,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
 
-    /*
+    /**
     게시글 작성
      */
     @Transactional
@@ -56,7 +56,7 @@ public class PostService {
         return new PostCreateResponseDto(post, postImages);
     }
 
-    /*
+    /**
     게시글 상세 조회
      */
     @Transactional(readOnly = true)
@@ -114,7 +114,7 @@ public class PostService {
         return new CommentResponseDto(parentId, "삭제된 댓글입니다.", true);
     }
 
-    /*
+    /**
     게시글 수정
      */
     @Transactional
@@ -192,7 +192,7 @@ public class PostService {
         }
     }
 
-    /*
+    /**
     게시글 삭제
     */
     @Transactional
