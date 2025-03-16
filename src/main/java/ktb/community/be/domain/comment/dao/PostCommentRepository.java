@@ -19,4 +19,7 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     @Query("SELECT c FROM PostComment c WHERE c.post.id = :postId AND c.deletedAt IS NULL ORDER BY c.createdAt ASC")
     @BatchSize(size = 20)
     List<PostComment> findAllByPostId(@Param("postId") Long postId);
+
+    @Query("SELECT COUNT(c) FROM PostComment c WHERE c.post.id = :postId AND c.deletedAt IS NULL")
+    int countByPostId(@Param("postId") Long postId);
 }

@@ -86,6 +86,10 @@ public class Post extends BaseTimeEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updateCommentCount(int count) {
+        this.commentCount = count;
+    }
+
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();

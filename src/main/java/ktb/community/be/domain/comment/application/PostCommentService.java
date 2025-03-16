@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +37,8 @@ public class PostCommentService {
         PostComment comment = new PostComment(post, user, requestDto.getContent());
         postCommentRepository.save(comment);
 
+        updateCommentCount(post);
+
         return new CommentResponseDto(comment);
     }
 
@@ -55,6 +56,8 @@ public class PostCommentService {
 
         PostComment reply = new PostComment(post, user, requestDto.getContent(), parentComment);
         postCommentRepository.save(reply);
+
+        updateCommentCount(post);
 
         return new CommentResponseDto(reply);
     }
@@ -81,8 +84,20 @@ public class PostCommentService {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
 
+        Post post = comment.getPost();
         comment.softDelete();
         postCommentRepository.save(comment);
+
+        updateCommentCount(post);
+    }
+
+    /**
+     * 댓글 수 업데이트 메서드
+     */
+    private void updateCommentCount(Post post) {
+        int commentCount = postCommentRepository.countByPostId(post.getId()); // 삭제되지 않은 댓글 수 조회
+        post.updateCommentCount(commentCount);
+        postRepository.save(post);
     }
 
     /**
