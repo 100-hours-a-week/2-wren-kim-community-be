@@ -16,12 +16,4 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
      */
     @Query("SELECT i FROM PostImage i WHERE i.post.id = :postId AND i.isDeleted = false ORDER BY i.orderIndex")
     List<PostImage> findAllByPostId(@Param("postId") Long postId);
-
-    /**
-    게시글 수정
-     */
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM PostImage i WHERE i.post.id = :postId")
-    void deleteAllByPostId(@Param("postId") Long postId);
 }
