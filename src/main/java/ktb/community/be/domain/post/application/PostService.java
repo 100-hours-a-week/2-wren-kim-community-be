@@ -18,7 +18,9 @@ import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,6 +39,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final ViewCountService viewCountService;
 
     /**
      * 게시글 작성
@@ -63,12 +66,12 @@ public class PostService {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        post.incrementViewCount();
-        postRepository.save(post);
+        // 비동기로 조회수 증가 실행
+        viewCountService.incrementViewCount(postId);
 
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
-        int likeCount = postLikeRepository.countByPostId(postId); // 좋아요 수 직접 조회
+        int likeCount = postLikeRepository.countByPostId(postId);
 
         return new PostDetailResponseDto(post, likeCount, images, buildCommentHierarchy(comments));
     }

@@ -90,10 +90,6 @@ public class Post extends BaseTimeEntity {
         this.commentCount = count;
     }
 
-    public void incrementViewCount() {
-        this.viewCount += 1;
-    }
-
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
