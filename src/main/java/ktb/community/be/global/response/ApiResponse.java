@@ -15,19 +15,6 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
-//    public static ApiResponse<Void> success() {
-//        return new ApiResponse<>(HttpStatus.OK, "요청 성공", null);
-//    }
-//
-//
-//    public static <T> ApiResponse<T> success(T data) {
-//        return new ApiResponse<>(HttpStatus.OK, "요청 성공", data);
-//    }
-//
-//    public static ApiResponse<String> error(HttpStatus status, String message) {
-//        return new ApiResponse<>(status, message, null);
-//    }
-
     public static ApiResponse<Void> success(String message) {
         return new ApiResponse<>(HttpStatus.OK, message, null);
     }
