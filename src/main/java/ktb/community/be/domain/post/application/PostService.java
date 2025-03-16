@@ -11,19 +11,18 @@ import ktb.community.be.domain.post.dao.PostImageRepository;
 import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.post.domain.PostImage;
-import ktb.community.be.domain.post.dto.PostCreateRequestDto;
-import ktb.community.be.domain.post.dto.PostCreateResponseDto;
-import ktb.community.be.domain.post.dto.PostDetailResponseDto;
-import ktb.community.be.domain.post.dto.PostUpdateRequestDto;
+import ktb.community.be.domain.post.dto.*;
 import ktb.community.be.domain.user.dao.UserRepository;
 import ktb.community.be.domain.user.domain.User;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -230,5 +229,14 @@ public class PostService {
         // 게시글 Soft Delete
         post.softDelete();
         postRepository.save(post); // 변경 감지 적용
+    }
+
+    /**
+     * 게시글 전체 조회 (커서 기반 페이지네이션)
+     */
+    @Transactional(readOnly = true)
+    public List<PostListResponseDto> getAllPosts(LocalDateTime cursor, Pageable pageable) {
+        List<Post> posts = postRepository.findByCursor(cursor, pageable);
+        return posts.stream().map(PostListResponseDto::new).collect(Collectors.toList());
     }
 }

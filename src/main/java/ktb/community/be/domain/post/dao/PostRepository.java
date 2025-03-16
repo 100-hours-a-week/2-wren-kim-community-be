@@ -1,12 +1,15 @@
 package ktb.community.be.domain.post.dao;
 
 import ktb.community.be.domain.post.domain.Post;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -25,4 +28,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying
     @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :postId")
     void incrementViewCount(@Param("postId") Long postId);
+
+    /**
+     * 커서 기반 게시글 목록 조회 (최신순)
+     */
+    @Query("SELECT p FROM Post p " +
+            "WHERE p.deletedAt IS NULL " +
+            "AND (:cursor IS NULL OR p.createdAt < :cursor) " +
+            "ORDER BY p.createdAt DESC")
+    List<Post> findByCursor(@Param("cursor") LocalDateTime cursor, Pageable pageable);
 }

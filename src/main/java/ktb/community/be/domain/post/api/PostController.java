@@ -7,15 +7,18 @@ import ktb.community.be.domain.post.application.PostService;
 import ktb.community.be.domain.post.dto.PostCreateRequestDto;
 import ktb.community.be.domain.post.dto.PostCreateResponseDto;
 import ktb.community.be.domain.post.dto.PostDetailResponseDto;
+import ktb.community.be.domain.post.dto.PostListResponseDto;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.response.ApiResponseConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -87,5 +90,15 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
         return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
+    }
+
+    @Operation(summary = "게시글 전체 조회", description = "커서 기반 페이지네이션을 사용하여 게시글을 최신순으로 조회합니다.")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PostListResponseDto>>> getAllPosts(
+            @RequestParam(required = false) LocalDateTime cursor,
+            @RequestParam(defaultValue = "10") int size) {
+
+        List<PostListResponseDto> posts = postService.getAllPosts(cursor, PageRequest.of(0, size));
+        return ResponseEntity.ok(ApiResponse.success("게시글 목록을 조회했습니다.", posts));
     }
 }
