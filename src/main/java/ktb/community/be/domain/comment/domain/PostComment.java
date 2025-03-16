@@ -54,6 +54,28 @@ public class PostComment {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     private List<PostComment> replies = new ArrayList<>();
 
+    public PostComment(Post post, User user, String content) {
+        this.post = post;
+        this.user = user;
+        this.content = content;
+        this.createdAt = LocalDateTime.now();
+        this.isDeleted = false;
+    }
+
+    public PostComment(Post post, User user, String content, PostComment parentComment) {
+        this.post = post;
+        this.user = user;
+        this.content = content;
+        this.parentComment = parentComment;
+        this.createdAt = LocalDateTime.now();
+        this.isDeleted = false;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();

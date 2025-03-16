@@ -77,7 +77,7 @@ public class PostService {
         Map<Long, CommentResponseDto> commentMap = new HashMap<>();
         List<CommentResponseDto> topLevelComments = new ArrayList<>();
 
-        // 모든 댓글을 Map에 저장
+        // 모든 댓글을 Map에 저장 (삭제 여부 포함)
         for (PostComment comment : comments) {
             commentMap.put(comment.getId(), new CommentResponseDto(comment));
         }
@@ -94,8 +94,8 @@ public class PostService {
                 CommentResponseDto parentComment = commentMap.get(parentId);
 
                 if (parentComment == null) {
-                    // 삭제된 부모 댓글을 처리하는 새로운 CommentResponseDto 생성 (Setter 없이)
-                    parentComment = createDeletedCommentDto(parentId);
+                    // 기존에는 새로운 삭제된 댓글 DTO를 생성했지만, 이제는 isDeleted 필드를 활용하여 기존 방식 유지
+                    parentComment = new CommentResponseDto(parentId, "삭제된 댓글입니다.", true);
                     commentMap.put(parentId, parentComment);
 
                     // 부모 댓글이 없으면 최상위 댓글 리스트에 추가
@@ -110,9 +110,8 @@ public class PostService {
         return topLevelComments;
     }
 
-    // 삭제된 부모 댓글을 처리하는 메서드 (Setter 없이 생성자로 처리)
     private CommentResponseDto createDeletedCommentDto(Long parentId) {
-        return new CommentResponseDto(parentId, "삭제된 댓글입니다.");
+        return new CommentResponseDto(parentId, "삭제된 댓글입니다.", true);
     }
 
     /*
