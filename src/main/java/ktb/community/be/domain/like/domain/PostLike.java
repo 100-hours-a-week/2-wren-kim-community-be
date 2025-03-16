@@ -41,10 +41,41 @@ public class PostLike extends BaseTimeEntity {
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
-    public void softDelete() {
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = true)
+    private SoftDeleteType softDeleteType;
+
+    public PostLike(Post post, User user) {
+        this.post = post;
+        this.user = user;
+        this.isDeleted = false;
+        this.softDeleteType = null;
+    }
+
+    // 사용자가 직접 좋아요 취소
+    public void softDeleteByUser() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.softDeleteType = SoftDeleteType.USER_ACTION;
+    }
+
+    // 게시글 삭제로 인해 Soft Delete
+    public void softDeleteByPostDeletion() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.softDeleteType = SoftDeleteType.POST_DELETION;
+    }
+
+    // 좋아요 복구 (단순 취소된 경우만 복구 가능)
+    public void restore() {
+        if (this.softDeleteType == SoftDeleteType.USER_ACTION) {
+            this.isDeleted = false;
+            this.deletedAt = null;
+            this.updatedAt = LocalDateTime.now();
+            this.softDeleteType = null;
+        }
     }
 
     @PreUpdate
