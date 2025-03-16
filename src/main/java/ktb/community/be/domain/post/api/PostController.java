@@ -38,14 +38,14 @@ public class PostController {
         List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
 
         PostCreateResponseDto responseDto = postService.createPost(requestDto, images, orderIndexes);
-        return ResponseEntity.ok(ApiResponse.success(responseDto));
+        return ResponseEntity.ok(ApiResponse.success("게시글이 작성되었습니다.", responseDto));
     }
 
     @Operation(summary = "게시글 상세 조회", description = "게시글 ID를 기반으로 상세 정보를 조회합니다.")
     @ApiResponseConstants.PostDetailResponses
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostDetail(@PathVariable Long postId) {
-        return ResponseEntity.ok(ApiResponse.success(postService.getPostDetail(postId)));
+        return ResponseEntity.ok(ApiResponse.success("게시글을 조회했습니다.", postService.getPostDetail(postId)));
     }
 
     private PostCreateRequestDto parseRequestData(String requestData) {
@@ -79,13 +79,13 @@ public class PostController {
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
 
         postService.updatePost(postId, requestData, images, orderIndexesJson);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다."));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. (Soft Delete)")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
     }
 }

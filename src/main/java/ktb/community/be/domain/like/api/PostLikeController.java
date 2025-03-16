@@ -23,7 +23,8 @@ public class PostLikeController {
             @RequestParam Long userId) {
 
         boolean isLiked = postLikeService.toggleLike(postId, userId);
-        return ResponseEntity.ok(ApiResponse.success(isLiked));
+        String message = isLiked ? "게시글에 좋아요를 눌렀습니다." : "게시글 좋아요를 취소했습니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, isLiked));
     }
 
     @Operation(summary = "게시글 좋아요 개수 조회", description = "해당 게시글의 좋아요 개수를 반환합니다.")
@@ -31,6 +32,6 @@ public class PostLikeController {
     @GetMapping("/{postId}/count")
     public ResponseEntity<ApiResponse<Integer>> getLikeCount(@PathVariable Long postId) {
         int likeCount = postLikeService.getLikeCount(postId);
-        return ResponseEntity.ok(ApiResponse.success(likeCount));
+        return ResponseEntity.ok(ApiResponse.success("게시글 좋아요 개수를 조회했습니다.", likeCount));
     }
 }

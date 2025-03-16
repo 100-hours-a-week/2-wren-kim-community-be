@@ -23,7 +23,7 @@ public class PostCommentController {
     public ResponseEntity<ApiResponse<CommentResponseDto>> createComment(
             @PathVariable Long postId,
             @RequestBody CommentRequestDto requestDto) {
-        return ResponseEntity.ok(ApiResponse.success(postCommentService.createComment(postId, requestDto)));
+        return ResponseEntity.ok(ApiResponse.success("댓글이 작성되었습니다.", postCommentService.createComment(postId, requestDto)));
     }
 
     @Operation(summary = "대댓글 작성", description = "특정 댓글에 대한 대댓글을 작성합니다.")
@@ -32,7 +32,7 @@ public class PostCommentController {
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody CommentRequestDto requestDto) {
-        return ResponseEntity.ok(ApiResponse.success(postCommentService.createReply(postId, commentId, requestDto)));
+        return ResponseEntity.ok(ApiResponse.success("대댓글이 작성되었습니다.", postCommentService.createReply(postId, commentId, requestDto)));
     }
 
     @Operation(summary = "댓글 수정", description = "특정 댓글을 수정합니다.")
@@ -40,19 +40,19 @@ public class PostCommentController {
     public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
             @PathVariable Long commentId,
             @RequestBody CommentRequestDto requestDto) {
-        return ResponseEntity.ok(ApiResponse.success(postCommentService.updateComment(commentId, requestDto)));
+        return ResponseEntity.ok(ApiResponse.success("댓글이 수정되었습니다.", postCommentService.updateComment(commentId, requestDto)));
     }
 
     @Operation(summary = "댓글 삭제", description = "특정 댓글을 삭제합니다. (Soft Delete)")
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId) {
         postCommentService.deleteComment(commentId);
-        return ResponseEntity.ok(ApiResponse.success());
+        return ResponseEntity.ok(ApiResponse.success("댓글이 삭제되었습니다."));
     }
 
     @Operation(summary = "댓글 목록 조회", description = "특정 게시글의 댓글 목록을 조회합니다.")
     @GetMapping
     public ResponseEntity<ApiResponse<List<CommentResponseDto>>> getCommentsByPostId(@PathVariable Long postId) {
-        return ResponseEntity.ok(ApiResponse.success(postCommentService.getCommentsByPostId(postId)));
+        return ResponseEntity.ok(ApiResponse.success("댓글 목록을 조회했습니다.", postCommentService.getCommentsByPostId(postId)));
     }
 }
