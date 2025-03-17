@@ -2,7 +2,7 @@ package ktb.community.be.domain.like.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_like", uniqueConstraints = {
-        @UniqueConstraint(name = "unique_like", columnNames = {"post_id", "user_id"})
+        @UniqueConstraint(name = "unique_like", columnNames = {"post_id", "member_id"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,8 +27,8 @@ public class PostLike extends BaseTimeEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
@@ -53,11 +53,11 @@ public class PostLike extends BaseTimeEntity {
     }
 
     // 사용자가 직접 좋아요 취소
-    public void softDeleteByUser() {
+    public void softDeleteByMember() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        this.softDeleteType = SoftDeleteType.USER_ACTION;
+        this.softDeleteType = SoftDeleteType.MEMBER_ACTION;
     }
 
     // 게시글 삭제로 인해 Soft Delete
@@ -70,7 +70,7 @@ public class PostLike extends BaseTimeEntity {
 
     // 좋아요 복구 (단순 취소된 경우만 복구 가능)
     public void restore() {
-        if (this.softDeleteType == SoftDeleteType.USER_ACTION) {
+        if (this.softDeleteType == SoftDeleteType.MEMBER_ACTION) {
             this.isDeleted = false;
             this.deletedAt = null;
             this.updatedAt = LocalDateTime.now();

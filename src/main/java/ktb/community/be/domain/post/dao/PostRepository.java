@@ -19,7 +19,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     /**
      * 게시글 상세 조회
      */
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"member"})
     @Query("SELECT p FROM Post p " +
             "WHERE p.id = :id AND p.deletedAt IS NULL")
     Optional<Post> findByIdAndDeletedAtIsNull(@Param("id") Long id);

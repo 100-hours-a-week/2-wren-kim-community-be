@@ -6,8 +6,8 @@ import ktb.community.be.domain.comment.dto.CommentRequestDto;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
 import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.user.dao.UserRepository;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.dao.MemberRepository;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
@@ -23,21 +23,21 @@ public class PostCommentService {
 
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 댓글 작성
      */
     @Transactional
     public CommentResponseDto createComment(Long postId, CommentRequestDto requestDto) {
-        User user = userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = memberRepository.findById(requestDto.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         PostComment comment = PostComment.builder()
                 .post(post)
-                .user(user)
+                .member(member)
                 .content(requestDto.getContent())
                 .build();
 
@@ -52,8 +52,8 @@ public class PostCommentService {
      */
     @Transactional
     public CommentResponseDto createReply(Long postId, Long parentCommentId, CommentRequestDto requestDto) {
-        User user = userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = memberRepository.findById(requestDto.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         PostComment parentComment = postCommentRepository.findById(parentCommentId)
@@ -61,7 +61,7 @@ public class PostCommentService {
 
         PostComment reply = PostComment.builder()
                 .post(post)
-                .user(user)
+                .member(member)
                 .content(requestDto.getContent())
                 .parentComment(parentComment)
                 .build();

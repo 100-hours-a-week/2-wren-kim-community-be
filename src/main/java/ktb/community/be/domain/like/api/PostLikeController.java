@@ -20,9 +20,9 @@ public class PostLikeController {
     @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<Boolean>> toggleLike(
             @PathVariable Long postId,
-            @RequestParam Long userId) {
+            @RequestParam Long memberId) {
 
-        boolean isLiked = postLikeService.toggleLike(postId, userId);
+        boolean isLiked = postLikeService.toggleLike(postId, memberId);
         String message = isLiked ? "게시글에 좋아요를 눌렀습니다." : "게시글 좋아요를 취소했습니다.";
         return ResponseEntity.ok(ApiResponse.success(message, isLiked));
     }

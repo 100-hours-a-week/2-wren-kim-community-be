@@ -27,6 +27,6 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     /**
      * 특정 사용자와 게시글에 대한 좋아요 조회 (Soft Delete 포함)
      */
-    @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.user.id = :userId")
-    Optional<PostLike> findByPostIdAndUserId(@Param("postId") Long postId, @Param("userId") Long userId);
+    @Query("SELECT pl FROM PostLike pl WHERE pl.post.id = :postId AND pl.member.id = :memberId")
+    Optional<PostLike> findByPostIdAndMemberId(@Param("postId") Long postId, @Param("memberId") Long memberId);
 }

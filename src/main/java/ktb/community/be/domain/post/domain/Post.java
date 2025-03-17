@@ -3,7 +3,7 @@ package ktb.community.be.domain.post.domain;
 import jakarta.persistence.*;
 import ktb.community.be.domain.comment.domain.PostComment;
 import ktb.community.be.domain.like.domain.PostLike;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -32,8 +32,8 @@ public class Post extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true) // User 삭제 시 게시글 유지
-    private User user;
+    @JoinColumn(name = "member_id", nullable = true) // Member 삭제 시 게시글 유지
+    private Member member;
 
     @Column(length = 255, nullable = false)
     private String title;

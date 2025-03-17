@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class PostListResponseDto {
     private final Long id;
     private final String title;
-    private final String userNickname;
+    private final String memberNickname;
     private final int likeCount;
     private final int commentCount;
     private final int viewCount;
@@ -18,7 +18,7 @@ public class PostListResponseDto {
     public PostListResponseDto(Post post) {
         this.id = post.getId();
         this.title = post.getTitle();
-        this.userNickname = post.getUser().getNickname();
+        this.memberNickname = post.getMember().getNickname();
         this.likeCount = post.getLikes().size();
         this.commentCount = post.getCommentCount();
         this.viewCount = post.getViewCount();

@@ -1,7 +1,7 @@
 package ktb.community.be.domain.post.dto;
 
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PostCreateRequestDto {
 
-    private Long userId;
+    private Long memberId;
 
     @NotBlank(message = "제목을 입력해주세요.")
     @Size(max = 26, message = "제목은 최대 26자까지 가능합니다.")
@@ -22,9 +22,9 @@ public class PostCreateRequestDto {
     @NotBlank(message = "내용을 입력해주세요.")
     private String content;
 
-    public Post toEntity(User user) {
+    public Post toEntity(Member member) {
         return Post.builder()
-                .user(user)
+                .member(member)
                 .title(title)
                 .content(content)
                 .viewCount(0)  // 기본값 명시적으로 설정

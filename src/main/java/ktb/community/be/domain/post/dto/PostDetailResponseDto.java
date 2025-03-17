@@ -9,7 +9,7 @@ import lombok.Getter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@JsonPropertyOrder({"id", "title", "content", "viewCount", "likeCount", "commentCount", "userNickname", "userProfileImageUrl", "imageUrls", "comments"})
+@JsonPropertyOrder({"id", "title", "content", "viewCount", "likeCount", "commentCount", "memberNickname", "memberProfileImageUrl", "imageUrls", "comments"})
 @Getter
 public class PostDetailResponseDto {
 
@@ -19,8 +19,8 @@ public class PostDetailResponseDto {
     private int viewCount;
     private int likeCount;
     private int commentCount;
-    private String userNickname;
-    private String userProfileImageUrl;
+    private String memberNickname;
+    private String memberProfileImageUrl;
     private List<String> imageUrls;
     private List<CommentResponseDto> comments;
 
@@ -31,8 +31,8 @@ public class PostDetailResponseDto {
         this.viewCount = post.getViewCount();
         this.likeCount = likeCount; // 직접 조회한 값 사용
         this.commentCount = post.getCommentCount();
-        this.userNickname = post.getUser().getNickname();
-        this.userProfileImageUrl = post.getUser().getProfileImageUrl();
+        this.memberNickname = post.getMember().getNickname();
+        this.memberProfileImageUrl = post.getMember().getProfileImageUrl();
         this.imageUrls = images.stream().map(PostImage::getImageUrl).collect(Collectors.toList());
         this.comments = comments;
     }

@@ -4,8 +4,8 @@ import ktb.community.be.domain.like.dao.PostLikeRepository;
 import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.user.dao.UserRepository;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.dao.MemberRepository;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -19,26 +19,26 @@ import java.time.LocalDateTime;
 public class PostLikeService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * 사용자가 게시글에 좋아요를 추가/취소하는 기능
      */
     @Transactional
-    public boolean toggleLike(Long postId, Long userId) {
+    public boolean toggleLike(Long postId, Long memberId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 사용자의 기존 좋아요 확인
-        PostLike postLike = postLikeRepository.findByPostIdAndUserId(postId, userId).orElse(null);
+        PostLike postLike = postLikeRepository.findByPostIdAndMemberId(postId, memberId).orElse(null);
 
         if (postLike == null) {
             postLike = PostLike.builder()
                     .post(post)
-                    .user(user)
+                    .member(member)
                     .isDeleted(false)
                     .softDeleteType(null)
                     .createdAt(LocalDateTime.now())
@@ -52,7 +52,7 @@ public class PostLikeService {
                 postLikeRepository.save(postLike);
                 return true;
             } else {
-                postLike.softDeleteByUser();
+                postLike.softDeleteByMember();
                 postLikeRepository.save(postLike);
                 return false;
             }

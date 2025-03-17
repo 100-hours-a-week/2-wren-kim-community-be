@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
 //    @Query("SELECT c FROM PostComment c " +
-//            "LEFT JOIN FETCH c.user " +
+//            "LEFT JOIN FETCH c.member " +
 //            "LEFT JOIN FETCH c.parentComment " +
 //            "WHERE c.post.id = :postId " +
 //            "ORDER BY c.createdAt ASC")

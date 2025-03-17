@@ -11,8 +11,8 @@ import ktb.community.be.domain.post.dao.PostRepository;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.post.domain.PostImage;
 import ktb.community.be.domain.post.dto.*;
-import ktb.community.be.domain.user.dao.UserRepository;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.dao.MemberRepository;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
@@ -35,7 +35,7 @@ public class PostService {
     private final PostCommentRepository postCommentRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostImageRepository postImageRepository;
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final FileStorageService fileStorageService;
     private final ViewCountService viewCountService;
 
@@ -44,13 +44,13 @@ public class PostService {
      */
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images, List<Integer> orderIndexes) {
-        User user = userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        Member member = memberRepository.findById(requestDto.getMemberId())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        Post post = postRepository.save(requestDto.toEntity(user));
+        Post post = postRepository.save(requestDto.toEntity(member));
 
         // 사용자 지정 순서 반영
-        List<PostImage> postImages = fileStorageService.storeImages(images, orderIndexes, post, user);
+        List<PostImage> postImages = fileStorageService.storeImages(images, orderIndexes, post, member);
         postImageRepository.saveAll(postImages);
 
         return new PostCreateResponseDto(post, postImages);
@@ -123,7 +123,7 @@ public class PostService {
         // 새 이미지 추가 (불필요한 INSERT 방지)
         if (newImages != null && !newImages.isEmpty()) {
             List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, newImages);
-            List<PostImage> newPostImages = fileStorageService.storeImages(newImages, orderIndexes, post, post.getUser());
+            List<PostImage> newPostImages = fileStorageService.storeImages(newImages, orderIndexes, post, post.getMember());
             postImageRepository.saveAll(newPostImages);
         }
 

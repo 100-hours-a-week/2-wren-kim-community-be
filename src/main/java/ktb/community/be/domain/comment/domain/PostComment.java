@@ -2,7 +2,7 @@ package ktb.community.be.domain.comment.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -30,8 +30,8 @@ public class PostComment {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_comment_id")

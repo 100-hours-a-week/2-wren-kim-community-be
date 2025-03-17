@@ -1,7 +1,7 @@
 package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.*;
 
@@ -24,8 +24,8 @@ public class PostImage extends BaseTimeEntity {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false) // 이미지 업로드한 유저 관계 추가
-    private User user;
+    @JoinColumn(name = "member_id", nullable = false) // 이미지 업로드한 유저 관계 추가
+    private Member member;
 
     @Column(length = 512, nullable = false)
     private String imageUrl;
