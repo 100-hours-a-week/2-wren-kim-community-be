@@ -75,14 +75,14 @@ public class PostController {
 
     @Operation(summary = "게시글 수정", description = "게시글을 수정합니다.")
     @PutMapping("/{postId}")
-    public ResponseEntity<ApiResponse<Void>> updatePost(
+    public ResponseEntity<ApiResponse<PostDetailResponseDto>> updatePost(
             @PathVariable Long postId,
             @RequestPart("data") String requestData,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
 
-        postService.updatePost(postId, requestData, images, orderIndexesJson);
-        return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다."));
+        PostDetailResponseDto updatedPost = postService.updatePost(postId, requestData, images, orderIndexesJson);
+        return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다.", updatedPost));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. (Soft Delete)")

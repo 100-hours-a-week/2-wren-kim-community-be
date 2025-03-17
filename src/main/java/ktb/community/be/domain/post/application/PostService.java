@@ -79,7 +79,7 @@ public class PostService {
      * 게시글 수정
      */
     @Transactional
-    public void updatePost(Long postId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
+    public PostDetailResponseDto updatePost(Long postId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
@@ -130,6 +130,8 @@ public class PostService {
 
         // 제목과 내용 업데이트
         post.update(updateRequest.getTitle(), updateRequest.getContent());
+
+        return new PostDetailResponseDto(post, postLikeRepository.countByPostId(postId), postImageRepository.findAllByPostId(postId), List.of());
     }
 
     private PostUpdateRequestDto parseUpdateRequestData(String requestData) {
