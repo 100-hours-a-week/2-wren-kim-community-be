@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @AllArgsConstructor
@@ -16,12 +17,14 @@ public class MemberRequestDto {
     private String email;
     private String password;
     private String nickname;
+    private MultipartFile profileImage;
 
-    public Member toMember(PasswordEncoder passwordEncoder) {
+    public Member toMember(PasswordEncoder passwordEncoder, String imageUrl) {
         return Member.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .nickname(nickname)
+                .profileImageUrl(imageUrl)
                 .authority(Authority.ROLE_USER)
                 .build();
     }

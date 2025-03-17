@@ -35,7 +35,7 @@ public class Member extends BaseTimeEntity {
     @Column(length = 30, nullable = false, unique = true)
     private String nickname;
 
-    @Column(length = 512)
+    @Column(length = 512, nullable = false)
     private String profileImageUrl;
 
     @Enumerated(EnumType.STRING)
@@ -69,9 +69,11 @@ public class Member extends BaseTimeEntity {
     private List<PostImage> postImages;
 
     @Builder
-    public Member(String email, String password, Authority authority) {
+    public Member(String email, String password, String nickname, String profileImageUrl, Authority authority) {
         this.email = email;
         this.password = password;
+        this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
         this.authority = authority;
     }
 

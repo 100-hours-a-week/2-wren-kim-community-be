@@ -16,6 +16,7 @@ import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
+import ktb.community.be.global.util.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ public class PostService {
         Post post = postRepository.save(requestDto.toEntity(member));
 
         // 사용자 지정 순서 반영
-        List<PostImage> postImages = fileStorageService.storeImages(images, orderIndexes, post, member);
+        List<PostImage> postImages = fileStorageService.storePostImages(images, orderIndexes, post, member);
         postImageRepository.saveAll(postImages);
 
         return new PostCreateResponseDto(post, postImages);
@@ -123,7 +124,7 @@ public class PostService {
         // 새 이미지 추가 (불필요한 INSERT 방지)
         if (newImages != null && !newImages.isEmpty()) {
             List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, newImages);
-            List<PostImage> newPostImages = fileStorageService.storeImages(newImages, orderIndexes, post, post.getMember());
+            List<PostImage> newPostImages = fileStorageService.storePostImages(newImages, orderIndexes, post, post.getMember());
             postImageRepository.saveAll(newPostImages);
         }
 

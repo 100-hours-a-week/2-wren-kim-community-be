@@ -6,6 +6,7 @@ import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.domain.member.domain.RefreshToken;
 import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.global.util.FileStorageService;
 import ktb.community.be.global.security.TokenDto;
 import ktb.community.be.global.security.TokenProvider;
 import ktb.community.be.global.security.TokenRequestDto;
@@ -25,6 +26,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public MemberResponseDto signup(MemberRequestDto memberRequestDto) {
@@ -32,7 +34,9 @@ public class AuthService {
             throw new RuntimeException("이미 가입되어 있는 유저입니다");
         }
 
-        Member member = memberRequestDto.toMember(passwordEncoder);
+        String imageUrl = fileStorageService.storeProfileImage(memberRequestDto.getProfileImage());
+
+        Member member = memberRequestDto.toMember(passwordEncoder, imageUrl);
         return MemberResponseDto.of(memberRepository.save(member));
     }
 
