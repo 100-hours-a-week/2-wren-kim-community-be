@@ -2,7 +2,7 @@ package ktb.community.be.domain.post.application;
 
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.post.domain.PostImage;
-import ktb.community.be.domain.user.domain.User;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 @Service
 public class FileStorageService {
 
-    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/posts/";
+    private static final String UPLOAD_DIR = System.getProperty("member.dir") + "/uploads/posts/";
 
-    public List<PostImage> storeImages(List<MultipartFile> images, List<Integer> orderIndexes, Post post, User user) {
+    public List<PostImage> storeImages(List<MultipartFile> images, List<Integer> orderIndexes, Post post, Member member) {
         if (images == null || images.isEmpty()) return List.of();
 
         if (orderIndexes == null || orderIndexes.size() != images.size()) {
@@ -29,11 +29,11 @@ public class FileStorageService {
         }
 
         return IntStream.range(0, images.size())
-                .mapToObj(i -> saveFile(images.get(i), post, user, orderIndexes.get(i)))
+                .mapToObj(i -> saveFile(images.get(i), post, member, orderIndexes.get(i)))
                 .collect(Collectors.toList());
     }
 
-    private PostImage saveFile(MultipartFile file, Post post, User user, int orderIndex) {
+    private PostImage saveFile(MultipartFile file, Post post, Member member, int orderIndex) {
         try {
             ensureUploadDirExists();
             String savedFilePath = generateUniqueFilePath(file);
@@ -41,7 +41,7 @@ public class FileStorageService {
 
             return PostImage.builder()
                     .post(post)
-                    .user(user)
+                    .member(member)
                     .imageUrl(savedFilePath)
                     .orderIndex(orderIndex)
                     .isDeleted(false)  // 기본값 설정

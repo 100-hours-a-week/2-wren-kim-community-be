@@ -1,4 +1,4 @@
-package ktb.community.be.domain.user.domain;
+package ktb.community.be.domain.member.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.post.domain.Post;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "user", uniqueConstraints = {
+@Table(name = "member", uniqueConstraints = {
         @UniqueConstraint(name = "unique_email", columnNames = "email"),
         @UniqueConstraint(name = "unique_nickname", columnNames = "nickname")
 })
@@ -20,7 +20,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class User extends BaseTimeEntity {
+public class Member extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,7 @@ public class User extends BaseTimeEntity {
     @Column(length = 128, nullable = false, unique = true)
     private String email;
 
-    @Column(length = 60, nullable = false)
+    @Column(length = 512, nullable = false)
     private String password;
 
     @Column(length = 30, nullable = false, unique = true)
@@ -37,6 +37,9 @@ public class User extends BaseTimeEntity {
 
     @Column(length = 512)
     private String profileImageUrl;
+
+    @Enumerated(EnumType.STRING)
+    private Authority authority;
 
     @Column(columnDefinition = "TINYINT(1) DEFAULT 1", nullable = false)
     private Boolean isActive = true;
@@ -53,17 +56,24 @@ public class User extends BaseTimeEntity {
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikes;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> postComments;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImage> postImages;
+
+    @Builder
+    public Member(String email, String password, Authority authority) {
+        this.email = email;
+        this.password = password;
+        this.authority = authority;
+    }
 
     @PrePersist
     public void prePersist() {
