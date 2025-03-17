@@ -2,6 +2,7 @@ package ktb.community.be.domain.member.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import ktb.community.be.domain.member.application.AuthService;
+import ktb.community.be.domain.member.dto.LoginRequestDto;
 import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
 import ktb.community.be.global.response.ApiResponse;
@@ -35,8 +36,8 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "이메일과 비밀번호를 입력하여 로그인을 진행하고 JWT 토큰을 반환합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<TokenDto>> login(@RequestBody MemberRequestDto memberRequestDto) {
-        TokenDto tokenDto = authService.login(memberRequestDto);
+    public ResponseEntity<ApiResponse<TokenDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
+        TokenDto tokenDto = authService.login(loginRequestDto);
         return ResponseEntity.ok(ApiResponse.success("로그인이 성공적으로 완료되었습니다.", tokenDto));
     }
 

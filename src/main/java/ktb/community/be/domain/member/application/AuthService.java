@@ -4,6 +4,7 @@ import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.dao.RefreshTokenRepository;
 import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.domain.member.domain.RefreshToken;
+import ktb.community.be.domain.member.dto.LoginRequestDto;
 import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
 import ktb.community.be.global.exception.CustomException;
@@ -61,9 +62,9 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenDto login(MemberRequestDto memberRequestDto) {
+    public TokenDto login(LoginRequestDto loginRequestDto) {
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
-        UsernamePasswordAuthenticationToken authenticationToken = memberRequestDto.toAuthentication();
+        UsernamePasswordAuthenticationToken authenticationToken = loginRequestDto.toAuthentication();
 
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
