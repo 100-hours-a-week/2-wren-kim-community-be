@@ -24,10 +24,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<MemberResponseDto>> signup(
             @RequestParam("email") String email,
             @RequestParam("password") String password,
+            @RequestParam("confirmPassword") String confirmPassword,
             @RequestParam("nickname") String nickname,
             @RequestPart("profileImage") MultipartFile profileImage) {
 
-        MemberRequestDto memberRequestDto = new MemberRequestDto(email, password, nickname, profileImage);
+        MemberRequestDto memberRequestDto = new MemberRequestDto(email, password, confirmPassword, nickname, profileImage);
         MemberResponseDto responseDto = authService.signup(memberRequestDto);
         return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다.", responseDto));
     }
