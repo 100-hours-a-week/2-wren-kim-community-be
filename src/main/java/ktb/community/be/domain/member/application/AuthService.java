@@ -6,6 +6,8 @@ import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.domain.member.domain.RefreshToken;
 import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.global.exception.CustomException;
+import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.FileStorageService;
 import ktb.community.be.global.security.TokenDto;
 import ktb.community.be.global.security.TokenProvider;
@@ -30,12 +32,30 @@ public class AuthService {
 
     @Transactional
     public MemberResponseDto signup(MemberRequestDto memberRequestDto) {
+        // 1. 이메일 중복 검사
         if (memberRepository.existsByEmail(memberRequestDto.getEmail())) {
-            throw new RuntimeException("이미 가입되어 있는 유저입니다");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*중복된 이메일입니다.");
         }
 
+        // 2. 닉네임 중복 검사
+        if (memberRepository.existsByNickname(memberRequestDto.getNickname())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*중복된 닉네임입니다.");
+        }
+
+        // 3. 비밀번호 확인 검사
+        if (!memberRequestDto.getPassword().equals(memberRequestDto.getConfirmPassword())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*비밀번호가 다릅니다.");
+        }
+
+        // 4. 프로필 이미지 필수 검사
+        if (memberRequestDto.getProfileImage() == null || memberRequestDto.getProfileImage().isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*프로필 사진을 추가해주세요.");
+        }
+
+        // 5. 프로필 이미지 저장
         String imageUrl = fileStorageService.storeProfileImage(memberRequestDto.getProfileImage());
 
+        // 6. 회원 저장
         Member member = memberRequestDto.toMember(passwordEncoder, imageUrl);
         return MemberResponseDto.of(memberRepository.save(member));
     }
