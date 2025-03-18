@@ -66,7 +66,8 @@ public class GlobalExceptionHandler {
     /**
      * 기타 예상치 못한 예외 처리 (서버 내부 오류)
      */
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(Throwable.class)
+//    @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleException(Exception ex) {
         log.error("❗ 서버 내부 오류 발생: {}", ex.getMessage(), ex);
         return ResponseEntity
