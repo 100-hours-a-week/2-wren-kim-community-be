@@ -94,4 +94,16 @@ public class Member extends BaseTimeEntity {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    // 닉네임 변경 메서드
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 프로필 이미지 변경 메서드
+    public void updateProfileImage(String newProfileImageUrl) {
+        this.profileImageUrl = newProfileImageUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

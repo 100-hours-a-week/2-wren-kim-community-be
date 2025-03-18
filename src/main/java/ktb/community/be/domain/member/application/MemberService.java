@@ -1,10 +1,15 @@
 package ktb.community.be.domain.member.application;
 
 import ktb.community.be.domain.member.dao.MemberRepository;
+import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.global.exception.CustomException;
+import ktb.community.be.global.exception.ErrorCode;
+import ktb.community.be.global.util.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -12,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final FileStorageService fileStorageService;
 
     public MemberResponseDto findMemberInfoById(Long memberId) {
         return memberRepository.findById(memberId)
@@ -23,5 +29,43 @@ public class MemberService {
         return memberRepository.findByEmail(email)
                 .map(MemberResponseDto::of)
                 .orElseThrow(() -> new RuntimeException("유저 정보가 없습니다."));
+    }
+
+    /**
+     * 회원 정보 수정
+     */
+    public MemberResponseDto updateMemberInfo(Long memberId, String nickname, MultipartFile profileImage) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
+
+        // 닉네임 검증 및 업데이트
+        if (nickname != null && !nickname.trim().isEmpty()) { // 빈 문자열 체크 추가
+            validateNickname(nickname);
+            member.updateNickname(nickname);
+        } else {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
+        }
+
+        // 프로필 이미지 저장 및 업데이트
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String newProfileImagePath = fileStorageService.storeProfileImage(profileImage);
+            member.updateProfileImage(newProfileImagePath);
+        }
+
+        return MemberResponseDto.of(member);
+    }
+
+    private void validateNickname(String nickname) {
+        if (nickname.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
+        }
+
+        if (nickname.length() > 10) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임은 최대 10자까지 작성 가능합니다.");
+        }
+
+        if (memberRepository.existsByNickname(nickname)) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*중복된 닉네임입니다.");
+        }
     }
 }

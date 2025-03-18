@@ -7,10 +7,8 @@ import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,5 +29,15 @@ public class MemberController {
     public ResponseEntity<ApiResponse<MemberResponseDto>> findMemberInfoByEmail(@PathVariable String email) {
         MemberResponseDto responseDto = memberService.findMemberInfoByEmail(email);
         return ResponseEntity.ok(ApiResponse.success("회원 정보를 조회하였습니다.", responseDto));
+    }
+
+    @Operation(summary = "회원 정보 수정", description = "닉네임과 프로필 이미지를 수정합니다.")
+    @PutMapping(value = "/me", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<MemberResponseDto>> updateMemberInfo(
+            @RequestPart(value = "nickname", required = false) String nickname,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        MemberResponseDto updatedMember = memberService.updateMemberInfo(SecurityUtil.getCurrentMemberId(), nickname, profileImage);
+        return ResponseEntity.ok(ApiResponse.success("회원 정보가 수정되었습니다.", updatedMember));
     }
 }
