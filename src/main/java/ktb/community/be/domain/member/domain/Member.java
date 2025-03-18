@@ -101,9 +101,13 @@ public class Member extends BaseTimeEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 프로필 이미지 변경 메서드
     public void updateProfileImage(String newProfileImageUrl) {
         this.profileImageUrl = newProfileImageUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
         this.updatedAt = LocalDateTime.now();
     }
 }

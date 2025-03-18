@@ -1,8 +1,10 @@
 package ktb.community.be.domain.member.api;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import ktb.community.be.domain.member.application.MemberService;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.domain.member.dto.PasswordUpdateRequestDto;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -39,5 +41,12 @@ public class MemberController {
 
         MemberResponseDto updatedMember = memberService.updateMemberInfo(SecurityUtil.getCurrentMemberId(), nickname, profileImage);
         return ResponseEntity.ok(ApiResponse.success("회원 정보가 수정되었습니다.", updatedMember));
+    }
+
+    @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
+    @PutMapping("/me/password")
+    public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody PasswordUpdateRequestDto passwordUpdateRequestDto) {
+        memberService.updatePassword(SecurityUtil.getCurrentMemberId(), passwordUpdateRequestDto);
+        return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다."));
     }
 }

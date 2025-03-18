@@ -3,6 +3,7 @@ package ktb.community.be.domain.member.application;
 import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.domain.member.dto.PasswordUpdateRequestDto;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.FileStorageService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +20,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final FileStorageService fileStorageService;
+    private final PasswordEncoder passwordEncoder;
 
     public MemberResponseDto findMemberInfoById(Long memberId) {
         return memberRepository.findById(memberId)
@@ -66,6 +69,27 @@ public class MemberService {
 
         if (memberRepository.existsByNickname(nickname)) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*중복된 닉네임입니다.");
+        }
+    }
+
+    /**
+     * 비밀번호 수정
+     */
+    @Transactional
+    public void updatePassword(Long memberId, PasswordUpdateRequestDto passwordUpdateRequestDto) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
+
+        validatePassword(passwordUpdateRequestDto.getNewPassword(), passwordUpdateRequestDto.getConfirmPassword());
+
+        // 비밀번호 암호화 후 업데이트
+        String encryptedPassword = passwordEncoder.encode(passwordUpdateRequestDto.getNewPassword());
+        member.updatePassword(encryptedPassword);
+    }
+
+    private void validatePassword(String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*비밀번호 확인과 다릅니다.");
         }
     }
 }
