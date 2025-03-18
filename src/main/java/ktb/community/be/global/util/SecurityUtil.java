@@ -1,6 +1,7 @@
 package ktb.community.be.global.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -14,8 +15,11 @@ public class SecurityUtil {
     public static Long getCurrentMemberId() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || authentication.getName() == null) {
-            throw  new RuntimeException("Security Context 에 인증 정보가 없습니다.");
+        if (authentication == null
+            || authentication.getName() == null
+            || authentication.getName().equals("anonymousUser")) {
+//            throw  new RuntimeException("Security Context 에 인증 정보가 없습니다.");
+            throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");  // 401 Unauthorized 처리
         }
 
         return Long.parseLong(authentication.getName());
