@@ -54,7 +54,8 @@ public class PostService {
         List<PostImage> postImages = fileStorageService.storePostImages(images, orderIndexes, post, member);
         postImageRepository.saveAll(postImages);
 
-        return new PostCreateResponseDto(post, postImages);
+//        return new PostCreateResponseDto(post, postImages);
+        return PostCreateResponseDto.from(post, postImages);
     }
 
     /**
@@ -72,7 +73,7 @@ public class PostService {
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
         int likeCount = postLikeRepository.countByPostId(postId);
 
-        return new PostDetailResponseDto(post, likeCount, images, CommentHierarchyBuilder.buildCommentHierarchy(comments));
+        return PostDetailResponseDto.from(post, likeCount, images, CommentHierarchyBuilder.buildCommentHierarchy(comments));
     }
 
     /**
@@ -131,7 +132,7 @@ public class PostService {
         // 제목과 내용 업데이트
         post.update(updateRequest.getTitle(), updateRequest.getContent());
 
-        return new PostDetailResponseDto(post, postLikeRepository.countByPostId(postId), postImageRepository.findAllByPostId(postId), List.of());
+        return PostDetailResponseDto.from(post, postLikeRepository.countByPostId(postId), postImageRepository.findAllByPostId(postId), List.of());
     }
 
     private PostUpdateRequestDto parseUpdateRequestData(String requestData) {
@@ -198,6 +199,6 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostListResponseDto> getAllPosts(LocalDateTime cursor, Pageable pageable) {
         List<Post> posts = postRepository.findByCursor(cursor, pageable);
-        return posts.stream().map(PostListResponseDto::new).collect(Collectors.toList());
+        return posts.stream().map(PostListResponseDto::from).collect(Collectors.toList());
     }
 }
