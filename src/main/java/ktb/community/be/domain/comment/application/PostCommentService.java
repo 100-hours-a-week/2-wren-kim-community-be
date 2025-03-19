@@ -44,7 +44,7 @@ public class PostCommentService {
         postCommentRepository.save(comment);
         updateCommentCount(post);
 
-        return new CommentResponseDto(comment);
+        return CommentResponseDto.from(comment);
     }
 
     /**
@@ -69,7 +69,7 @@ public class PostCommentService {
         postCommentRepository.save(reply);
         updateCommentCount(post);
 
-        return new CommentResponseDto(reply);
+        return CommentResponseDto.from(reply);
     }
 
     /**
@@ -83,7 +83,7 @@ public class PostCommentService {
         comment.updateContent(requestDto.getContent());
         postCommentRepository.save(comment);
 
-        return new CommentResponseDto(comment);
+        return CommentResponseDto.from(comment);
     }
 
     /**

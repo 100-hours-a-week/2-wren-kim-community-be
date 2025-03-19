@@ -19,7 +19,7 @@ public class CommentHierarchyBuilder {
 
         // 모든 댓글을 Map에 저장 (삭제 여부 포함)
         for (PostComment comment : comments) {
-            commentMap.put(comment.getId(), new CommentResponseDto(comment));
+            commentMap.put(comment.getId(), CommentResponseDto.from(comment));
         }
 
         // 부모-자식 관계 설정
@@ -35,7 +35,7 @@ public class CommentHierarchyBuilder {
 
                 if (parentComment == null) {
                     // 기존에는 새로운 삭제된 댓글 DTO를 생성했지만, 이제는 isDeleted 필드를 활용하여 기존 방식 유지
-                    parentComment = new CommentResponseDto(parentId, "삭제된 댓글입니다.", true);
+                    parentComment = CommentResponseDto.deleted(comment);
                     commentMap.put(parentId, parentComment);
 
                     // 부모 댓글이 없으면 최상위 댓글 리스트에 추가
