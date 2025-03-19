@@ -47,4 +47,11 @@ public class AuthController {
         TokenDto tokenDto = authService.reissue(tokenRequestDto);
         return ResponseEntity.ok(ApiResponse.success("토큰이 재발급되었습니다.", tokenDto));
     }
+
+    @Operation(summary = "로그아웃", description = "현재 로그인한 사용자의 Refresh Token을 삭제하여 로그아웃합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody TokenRequestDto tokenRequestDto) {
+        authService.logout(tokenRequestDto);
+        return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다."));
+    }
 }

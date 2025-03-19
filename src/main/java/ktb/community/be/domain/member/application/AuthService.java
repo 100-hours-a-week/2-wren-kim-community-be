@@ -155,4 +155,24 @@ public class AuthService {
         // 토큰 발급
         return tokenDto;
     }
+
+    /**
+     * 로그아웃
+     */
+    @Transactional
+    public void logout(TokenRequestDto tokenRequestDto) {
+        // 1. Refresh Token 검증
+        if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");
+        }
+
+        // 2. 현재 로그인한 사용자의 Authentication 정보 가져오기
+        Authentication authentication = tokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
+
+        // 3. Refresh Token이 존재하는지 확인하고 삭제
+        RefreshToken refreshToken = refreshTokenRepository.findByKey(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "이미 로그아웃된 사용자입니다."));
+
+        refreshTokenRepository.delete(refreshToken);
+    }
 }
