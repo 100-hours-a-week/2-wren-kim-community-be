@@ -32,6 +32,9 @@ public class AuthService {
     private final FileStorageService fileStorageService;
     private final MemberService memberService;
 
+    /**
+     * 회원가입
+     */
     @Transactional
     public MemberResponseDto signup(MemberRequestDto memberRequestDto) {
         // 1. 이메일 중복 검사
@@ -86,6 +89,10 @@ public class AuthService {
 //        return tokenDto;
 //    }
 
+    /**
+     * 로그인
+     * (참고: 위 로그인 메서드는 탈퇴 회원 처리가 되어 있지 않음)
+     */
     @Transactional
     public TokenDto login(LoginRequestDto loginRequestDto) {
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -116,6 +123,9 @@ public class AuthService {
         return tokenDto;
     }
 
+    /**
+     * 토큰 재발급
+     */
     @Transactional
     public TokenDto reissue(TokenRequestDto tokenRequestDto) {
         // 1. Refresh Token 검증
