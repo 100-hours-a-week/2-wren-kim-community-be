@@ -49,4 +49,11 @@ public class MemberController {
         memberService.updatePassword(SecurityUtil.getCurrentMemberId(), passwordUpdateRequestDto);
         return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다."));
     }
+
+    @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 계정을 비활성화합니다.")
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteMember() {
+        memberService.deleteMember(SecurityUtil.getCurrentMemberId());
+        return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
+    }
 }

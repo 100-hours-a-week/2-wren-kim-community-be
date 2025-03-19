@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -90,6 +93,51 @@ public class MemberService {
     private void validatePassword(String newPassword, String confirmPassword) {
         if (!newPassword.equals(confirmPassword)) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*비밀번호 확인과 다릅니다.");
+        }
+    }
+
+    /**
+     * 회원 탈퇴 (소프트 삭제)
+     */
+    @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        if (member.getIsDeleted()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "이미 탈퇴한 계정입니다.");
+        }
+
+        member.softDelete();
+    }
+
+    /**
+     * 로그인 시 탈퇴한 회원인지 확인하고 복구 가능하면 복구
+     */
+    public void restoreIfPossible(String email) {
+        Member member = memberRepository.findByEmailIncludingDeleted(email)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
+
+        if (member.getIsDeleted()) {
+            LocalDateTime deletionTime = member.getDeletedAt();
+            if (deletionTime != null && deletionTime.plusDays(30).isAfter(LocalDateTime.now())) {
+                member.restoreAccount(); // 30일 이내면 복구
+            } else {
+                throw new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요.");
+            }
+        }
+    }
+
+    /**
+     * 30일이 지난 탈퇴 회원의 이메일/닉네임을 deleted_로 변경
+     */
+    @Transactional
+    public void processExpiredDeletedAccounts() {
+        LocalDateTime thresholdDate = LocalDateTime.now().minusDays(30);
+        List<Member> expiredMembers = memberRepository.findAllByIsDeletedTrueAndDeletedAtBefore(thresholdDate);
+
+        for (Member member : expiredMembers) {
+            member.markAsDeleted();
         }
     }
 }

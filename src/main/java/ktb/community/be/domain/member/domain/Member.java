@@ -86,8 +86,24 @@ public class Member extends BaseTimeEntity {
 
     public void softDelete() {
         this.isDeleted = true;
+        this.isActive = false;
         this.deletedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markAsDeleted() {
+        if (!this.email.startsWith("deleted_")) {
+            this.email = "deleted_" + this.email;
+        }
+        if (!this.nickname.startsWith("deleted_")) {
+            this.nickname = "deleted_" + this.nickname;
+        }
+    }
+
+    public void restoreAccount() {
+        this.isDeleted = false;
+        this.isActive = true;
+        this.deletedAt = null;
     }
 
     @PreUpdate
@@ -95,7 +111,6 @@ public class Member extends BaseTimeEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 닉네임 변경 메서드
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
         this.updatedAt = LocalDateTime.now();

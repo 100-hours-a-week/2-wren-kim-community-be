@@ -30,6 +30,7 @@ public class AuthService {
     private final TokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final FileStorageService fileStorageService;
+    private final MemberService memberService;
 
     @Transactional
     public MemberResponseDto signup(MemberRequestDto memberRequestDto) {
@@ -61,6 +62,30 @@ public class AuthService {
         return MemberResponseDto.of(memberRepository.save(member));
     }
 
+//    @Transactional
+//    public TokenDto login(LoginRequestDto loginRequestDto) {
+//        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
+//        UsernamePasswordAuthenticationToken authenticationToken = loginRequestDto.toAuthentication();
+//
+//        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
+//        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
+//        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+//
+//        // 3. 인증 정보를 기반으로 JWT 토큰 생성
+//        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
+//
+//        // 4. RefreshToken 저장
+//        RefreshToken refreshToken = RefreshToken.builder()
+//                .key(authentication.getName())
+//                .value(tokenDto.getRefreshToken())
+//                .build();
+//
+//        refreshTokenRepository.save(refreshToken);
+//
+//        // 5. 토큰 발급
+//        return tokenDto;
+//    }
+
     @Transactional
     public TokenDto login(LoginRequestDto loginRequestDto) {
         // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
@@ -69,6 +94,12 @@ public class AuthService {
         // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
         //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        Member member = memberRepository.findByEmailIncludingDeleted(loginRequestDto.getEmail())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
+
+        // 탈퇴한 계정이면 복구 가능 여부 확인
+        memberService.restoreIfPossible(member.getEmail());
 
         // 3. 인증 정보를 기반으로 JWT 토큰 생성
         TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
