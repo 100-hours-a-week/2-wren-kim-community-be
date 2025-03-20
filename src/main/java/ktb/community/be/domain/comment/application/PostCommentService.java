@@ -98,14 +98,19 @@ public class PostCommentService {
      */
     @Transactional
     public void deleteComment(Long commentId) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
+        Optional<PostComment> optionalComment = postCommentRepository.findByIdIncludingDeleted(commentId);
 
-        Post post = comment.getPost();
+        if (optionalComment.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다.");
+        }
+
+        PostComment comment = optionalComment.get();
         comment.softDelete();
+
+        comment.updateContent("삭제된 댓글입니다.");
         postCommentRepository.save(comment);
 
-        updateCommentCount(post);
+        updateCommentCount(comment.getPost());
     }
 
     /**
