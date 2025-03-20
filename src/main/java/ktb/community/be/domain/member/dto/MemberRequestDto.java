@@ -43,10 +43,10 @@ public class MemberRequestDto {
     /**
      * Member 엔티티로 변환
      */
-    public Member toMember(PasswordEncoder passwordEncoder, String imageUrl) {
+    public Member toMember(String encodedPassword, String imageUrl) {
         return Member.builder()
                 .email(email)
-                .password(passwordEncoder.encode(password))
+                .password(encodedPassword)
                 .nickname(nickname)
                 .profileImageUrl(imageUrl)
                 .authority(Authority.ROLE_USER)
