@@ -7,9 +7,7 @@ import java.util.*;
 
 public class CommentHierarchyBuilder {
 
-    private CommentHierarchyBuilder() {
-        // 인스턴스화 방지 (유틸리티 클래스)
-    }
+    private CommentHierarchyBuilder() {}
 
     public static List<CommentResponseDto> buildCommentHierarchy(List<PostComment> comments) {
         if (comments.isEmpty()) return Collections.emptyList();
@@ -17,35 +15,36 @@ public class CommentHierarchyBuilder {
         Map<Long, CommentResponseDto> commentMap = new HashMap<>();
         List<CommentResponseDto> topLevelComments = new ArrayList<>();
 
-        // 모든 댓글을 Map에 저장 (삭제 여부 포함)
+        // 모든 댓글을 Map에 저장 (삭제된 댓글 포함)
         for (PostComment comment : comments) {
-            commentMap.put(comment.getId(), CommentResponseDto.from(comment));
+            CommentResponseDto commentDto = comment.getIsDeleted()
+                    ? CommentResponseDto.deletedPlaceholder(comment) // 삭제된 댓글도 포함
+                    : CommentResponseDto.from(comment);
+            commentMap.put(comment.getId(), commentDto);
         }
 
-        // 부모-자식 관계 설정
+        // 부모-자식 관계를 올바르게 매핑
         for (PostComment comment : comments) {
-            Long parentId = comment.getParentComment() != null ? comment.getParentComment().getId() : null;
+            Long parentId = Optional.ofNullable(comment.getParentComment())
+                    .map(PostComment::getId)
+                    .orElse(null);
+
+            CommentResponseDto currentComment = commentMap.get(comment.getId());
 
             if (parentId == null) {
-                // 부모 댓글이 없는 경우 최상위 댓글로 처리
-                topLevelComments.add(commentMap.get(comment.getId()));
+                topLevelComments.add(currentComment);
             } else {
-                // 부모 댓글 찾기
-                CommentResponseDto parentComment = commentMap.get(parentId);
-
-                if (parentComment == null) {
-                    // 기존에는 새로운 삭제된 댓글 DTO를 생성했지만, 이제는 isDeleted 필드를 활용하여 기존 방식 유지
-                    parentComment = CommentResponseDto.deleted(comment);
-                    commentMap.put(parentId, parentComment);
-
-                    // 부모 댓글이 없으면 최상위 댓글 리스트에 추가
-                    topLevelComments.add(parentComment);
-                }
-
-                // 부모 댓글에 대댓글 추가
-                parentComment.getReplies().add(commentMap.get(comment.getId()));
+                // 부모 댓글이 삭제되었더라도 계층 유지
+                CommentResponseDto parentComment = commentMap.getOrDefault(
+                        parentId,
+                        CommentResponseDto.deletedPlaceholder(comment.getParentComment())
+                );
+                parentComment.getReplies().add(currentComment);
             }
         }
+
+        // 최상위 댓글을 정렬 (삭제된 댓글이 중간에 끼지 않도록)
+        topLevelComments.sort(Comparator.comparing(CommentResponseDto::getCreatedAt));
 
         return topLevelComments;
     }
