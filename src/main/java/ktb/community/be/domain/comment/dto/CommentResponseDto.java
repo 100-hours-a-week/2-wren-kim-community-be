@@ -36,15 +36,16 @@ public class CommentResponseDto {
                 .build();
     }
 
-    public static CommentResponseDto deleted(PostComment comment) {
+    public static CommentResponseDto deletedPlaceholder(PostComment comment) {
         return CommentResponseDto.builder()
                 .id(comment.getId())
-                .content("삭제된 댓글입니다.")
+                .content("삭제된 댓글입니다.") // 삭제된 댓글 기본 메시지
                 .createdAt(comment.getCreatedAt())
                 .memberNickname("(알수없음)")
                 .memberProfileImageUrl(null)
-                .parentCommentId(null)
                 .isDeleted(true)
+                .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
+                .replies(new ArrayList<>()) // 기본적으로 빈 리스트 추가
                 .build();
     }
 }
