@@ -198,6 +198,10 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostListResponseDto> getAllPosts(LocalDateTime cursor, Pageable pageable) {
         List<Post> posts = postRepository.findByCursor(cursor, pageable);
-        return posts.stream().map(PostListResponseDto::from).collect(Collectors.toList());
+
+        return posts.stream().map(post -> {
+            int likeCount = postLikeRepository.countByPostId(post.getId());
+            return PostListResponseDto.from(post, likeCount);
+        }).collect(Collectors.toList());
     }
 }

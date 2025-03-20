@@ -17,12 +17,12 @@ public class PostListResponseDto {
     private final int viewCount;
     private final LocalDateTime createdAt;
 
-    public static PostListResponseDto from(Post post) {
+    public static PostListResponseDto from(Post post, int likeCount) {
         return PostListResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .memberNickname(post.getMember().getNickname() != null ? post.getMember().getNickname() : "(알수없음)")
-                .likeCount(post.getLikes().size())
+                .likeCount(likeCount)
                 .commentCount(post.getCommentCount())
                 .viewCount(post.getViewCount())
                 .createdAt(post.getCreatedAt())
