@@ -33,6 +33,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // pring Security의 기본 CORS 설정 비활성화
+                .cors(cors -> cors.disable())
+
                 // CSRF 보호 비활성화
                 .csrf(csrf -> csrf.disable())
 
