@@ -54,7 +54,6 @@ public class PostService {
         List<PostImage> postImages = fileStorageService.storePostImages(images, orderIndexes, post, member);
         postImageRepository.saveAll(postImages);
 
-//        return new PostCreateResponseDto(post, postImages);
         return PostCreateResponseDto.from(post, postImages);
     }
 
