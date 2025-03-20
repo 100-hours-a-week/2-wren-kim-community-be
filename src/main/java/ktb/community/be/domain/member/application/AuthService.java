@@ -116,11 +116,11 @@ public class AuthService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
         // 5. JWT 토큰 생성
-        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
+        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication, member.getId());
 
         // 6. RefreshToken 저장
         RefreshToken refreshToken = RefreshToken.builder()
-                .key(authentication.getName())
+                .key(member.getId().toString())
                 .value(tokenDto.getRefreshToken())
                 .build();
 
@@ -137,29 +137,32 @@ public class AuthService {
     public TokenDto reissue(TokenRequestDto tokenRequestDto) {
         // 1. Refresh Token 검증
         if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-            throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");
         }
 
         // 2. Access Token 에서 Member ID 가져오기
         Authentication authentication = tokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
 
-        // 3. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져옴
+        // 3. 저장된 Refresh Token 가져오기
         RefreshToken refreshToken = refreshTokenRepository.findByKey(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "로그아웃된 사용자입니다."));
 
-        // 4. Refresh Token 일치하는지 검사
+        // 4. Refresh Token 일치 여부 확인
         if (!refreshToken.getValue().equals(tokenRequestDto.getRefreshToken())) {
-            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "토큰의 유저 정보가 일치하지 않습니다.");
         }
 
-        // 5. 새로운 토큰 생성
-        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
+        // 5. 회원 정보 가져오기
+        Member member = memberRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
-        // 6. 저장소 정보 업데이트
+        // 6. 새로운 JWT 생성 (memberId 추가)
+        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication, member.getId());
+
+        // 7. Refresh Token 업데이트
         RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
         refreshTokenRepository.save(newRefreshToken);
 
-        // 토큰 발급
         return tokenDto;
     }
 

@@ -11,6 +11,7 @@ import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
+import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,10 @@ public class PostCommentService {
      */
     @Transactional
     public CommentResponseDto createComment(Long postId, CommentRequestDto requestDto) {
-        Member member = memberRepository.findById(requestDto.getMemberId())
+
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
@@ -52,7 +56,10 @@ public class PostCommentService {
      */
     @Transactional
     public CommentResponseDto createReply(Long postId, Long parentCommentId, CommentRequestDto requestDto) {
-        Member member = memberRepository.findById(requestDto.getMemberId())
+
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));

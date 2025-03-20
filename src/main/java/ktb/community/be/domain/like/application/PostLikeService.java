@@ -8,6 +8,7 @@ import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
+import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,10 @@ public class PostLikeService {
      * 사용자가 게시글에 좋아요를 추가/취소하는 기능
      */
     @Transactional
-    public boolean toggleLike(Long postId, Long memberId) {
+    public boolean toggleLike(Long postId) {
+
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
