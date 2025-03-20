@@ -14,7 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "post_comment")
 @SQLDelete(sql = "UPDATE post_comment SET deleted_at = NOW() WHERE id = ?")
-@Where(clause = "deleted_at IS NULL")
+//@Where(clause = "deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
