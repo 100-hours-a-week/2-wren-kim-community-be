@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Slf4j
 public class SecurityUtil {
@@ -22,6 +23,16 @@ public class SecurityUtil {
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");  // 401 Unauthorized 처리
         }
 
-        return Long.parseLong(authentication.getName());
+        try {
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof UserDetails userDetails) {
+                return Long.parseLong(userDetails.getUsername());
+            } else {
+                throw new AuthenticationCredentialsNotFoundException("잘못된 인증 정보입니다.");
+            }
+        } catch (NumberFormatException e) {
+            throw new AuthenticationCredentialsNotFoundException("잘못된 인증 정보입니다.");
+        }
     }
 }
