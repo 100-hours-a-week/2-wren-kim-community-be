@@ -118,10 +118,20 @@ public class MemberService {
         Member member = memberRepository.findByEmailIncludingDeleted(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
+        if (!member.getIsDeleted()) { // 삭제되지 않은 계정이면 실행 안 함
+            return;
+        }
+
         if (member.getIsDeleted()) {
             LocalDateTime deletionTime = member.getDeletedAt();
             if (deletionTime != null && deletionTime.plusDays(30).isAfter(LocalDateTime.now())) {
                 member.restoreAccount(); // 30일 이내면 복구
+
+                // 닉네임이 deleted_로 변경된 경우 원래 닉네임으로 복원
+                if (member.getNickname().startsWith("deleted_")) {
+                    member.updateNickname(member.getNickname().replace("deleted_", ""));
+                }
+
             } else {
                 throw new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요.");
             }

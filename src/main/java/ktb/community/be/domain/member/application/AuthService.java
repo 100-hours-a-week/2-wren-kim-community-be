@@ -14,7 +14,6 @@ import ktb.community.be.global.security.TokenDto;
 import ktb.community.be.global.security.TokenProvider;
 import ktb.community.be.global.security.TokenRequestDto;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -22,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -106,26 +104,21 @@ public class AuthService {
         // 2. 탈퇴한 계정이면 복구 가능 여부 확인
         memberService.restoreIfPossible(member.getEmail());
 
-        // 3. 비밀번호 비교
-        log.info("입력한 비밀번호: {}", loginRequestDto.getPassword());
-        log.info("DB 저장된 암호화된 비밀번호: {}", member.getPassword());
-
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
-            log.error("비밀번호가 일치하지 않습니다. 입력된 비밀번호: {}, 저장된 해시: {}", loginRequestDto.getPassword(), member.getPassword());
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS, "비밀번호가 일치하지 않습니다.");
         }
 
-        // 4. Authentication 객체 생성 (이메일을 username으로 사용)
+        // 3. Authentication 객체 생성 (이메일을 username으로 사용)
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(member.getEmail(), loginRequestDto.getPassword());
 
-        // 5. 실제 검증 (Spring Security의 AuthenticationManager 사용)
+        // 4. 실제 검증 (Spring Security의 AuthenticationManager 사용)
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        // 6. JWT 토큰 생성
+        // 5. JWT 토큰 생성
         TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
 
-        // 7. RefreshToken 저장
+        // 6. RefreshToken 저장
         RefreshToken refreshToken = RefreshToken.builder()
                 .key(authentication.getName())
                 .value(tokenDto.getRefreshToken())
@@ -133,7 +126,7 @@ public class AuthService {
 
         refreshTokenRepository.save(refreshToken);
 
-        // 8. 토큰 발급
+        // 7. 토큰 발급
         return tokenDto;
     }
 

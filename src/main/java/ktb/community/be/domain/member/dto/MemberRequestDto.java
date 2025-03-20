@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.multipart.MultipartFile;
 
 @Getter
@@ -50,6 +49,7 @@ public class MemberRequestDto {
                 .nickname(nickname)
                 .profileImageUrl(imageUrl)
                 .authority(Authority.ROLE_USER)
+                .isDeleted(false)
                 .build();
     }
 
