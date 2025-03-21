@@ -29,6 +29,9 @@ public class PostDetailResponseDto {
     private List<CommentResponseDto> comments;
 
     public static PostDetailResponseDto from(Post post, int likeCount, List<PostImage> images, List<CommentResponseDto> comments) {
+        String nickname = post.getMember() != null ? post.getMember().getNickname() : "(알수없음)";
+        String profileImageUrl = post.getMember() != null ? post.getMember().getProfileImageUrl() : null;
+
         return PostDetailResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())

@@ -17,6 +17,7 @@ import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
 import ktb.community.be.global.util.FileStorageService;
+import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,9 @@ public class PostService {
      */
     @Transactional
     public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images, List<Integer> orderIndexes) {
-        Member member = memberRepository.findById(requestDto.getMemberId())
+        Long currentMemberId = SecurityUtil.getCurrentMemberId();
+
+        Member member = memberRepository.findById(currentMemberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Post post = postRepository.save(requestDto.toEntity(member));

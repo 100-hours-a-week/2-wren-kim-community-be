@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PostCreateRequestDto {
 
-    private Long memberId;
-
     @NotBlank(message = "제목을 입력해주세요.")
     @Size(max = 26, message = "제목은 최대 26자까지 가능합니다.")
     private String title;
