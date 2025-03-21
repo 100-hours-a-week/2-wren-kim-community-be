@@ -40,6 +40,7 @@ public class MemberService {
     /**
      * 회원 정보 수정
      */
+    @Transactional
     public MemberResponseDto updateMemberInfo(Long memberId, String nickname, MultipartFile profileImage) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
