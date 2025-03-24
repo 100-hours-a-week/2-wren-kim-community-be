@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@JsonPropertyOrder({"id", "title", "content", "createdAt", "viewCount", "likeCount", "commentCount", "memberNickname", "memberProfileImageUrl", "imageUrls", "comments"})
+@JsonPropertyOrder({"id", "title", "content", "createdAt", "updatedAt", "viewCount", "likeCount", "commentCount", "memberNickname", "memberProfileImageUrl", "imageUrls", "comments"})
 @Getter
 @Builder
 public class PostDetailResponseDto {
@@ -20,6 +20,7 @@ public class PostDetailResponseDto {
     private String title;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private int viewCount;
     private int likeCount;
     private int commentCount;
@@ -37,6 +38,7 @@ public class PostDetailResponseDto {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
                 .viewCount(post.getViewCount())
                 .likeCount(likeCount)
                 .commentCount(post.getCommentCount())
