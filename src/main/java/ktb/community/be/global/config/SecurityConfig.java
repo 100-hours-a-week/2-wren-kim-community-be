@@ -2,10 +2,12 @@ package ktb.community.be.global.config;
 
 import ktb.community.be.global.security.JwtAccessDeniedHandler;
 import ktb.community.be.global.security.JwtAuthenticationEntryPoint;
+import ktb.community.be.global.security.TokenBlacklistService;
 import ktb.community.be.global.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +28,7 @@ public class SecurityConfig {
     private final CorsFilter corsFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -34,7 +39,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // pring Security의 기본 CORS 설정 비활성화
-                .cors(cors -> cors.disable())
+                .cors(withDefaults())
 
                 // CSRF 보호 비활성화
                 .csrf(csrf -> csrf.disable())
@@ -60,11 +65,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/webjars/**",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/api/**"
                         ).permitAll() // Swagger 관련 요청 허용
-                        .requestMatchers("/auth/**").permitAll() // 로그인, 회원가입 허용
-                        .requestMatchers("/api/**").permitAll() // 기타 API 허용 (보안 설정 필요하면 변경 가능)
-                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
+                        .requestMatchers("/auth/**").permitAll() // 로그인, 회원가입만 허용
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight OPTIONS 허용
+                        .anyRequest().authenticated() // 나머지는 인증 필요
                 )
 
                 // 기본 로그인 및 HTTP Basic 인증 비활성화
@@ -72,8 +78,7 @@ public class SecurityConfig {
                 .httpBasic(httpBasic -> httpBasic.disable())
 
                 // JWT 필터 적용
-                .apply(new JwtSecurityConfig(tokenProvider));
-//                .addFilterBefore(new JwtAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
+                .apply(new JwtSecurityConfig(tokenProvider, tokenBlacklistService));
 
         return http.build();
     }

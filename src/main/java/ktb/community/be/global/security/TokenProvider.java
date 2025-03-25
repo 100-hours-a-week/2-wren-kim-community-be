@@ -3,6 +3,11 @@ package ktb.community.be.global.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import ktb.community.be.domain.member.dao.MemberRepository;
+import ktb.community.be.domain.member.domain.Member;
+import ktb.community.be.global.exception.CustomException;
+import ktb.community.be.global.exception.ErrorCode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,11 +33,15 @@ public class TokenProvider {
     private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 30;            // 30분
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 24 * 7;  // 7일
 
+    @Getter
     private final Key key;
 
-    public TokenProvider(@Value("${jwt.secret}") String secretKey) {
+    private final MemberRepository memberRepository;
+
+    public TokenProvider(@Value("${jwt.secret}") String secretKey, MemberRepository memberRepository) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.memberRepository = memberRepository;
     }
 
     public TokenDto generateTokenDto(Authentication authentication, Long memberId) {
@@ -75,6 +84,9 @@ public class TokenProvider {
         }
 
         Long memberId = Long.parseLong(claims.getSubject());
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
         // 클레임에서 권한 정보 가져오기
         Collection<? extends GrantedAuthority> authorities =

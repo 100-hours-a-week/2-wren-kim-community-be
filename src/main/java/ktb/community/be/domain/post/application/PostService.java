@@ -45,10 +45,9 @@ public class PostService {
      * 게시글 작성
      */
     @Transactional
-    public PostCreateResponseDto createPost(PostCreateRequestDto requestDto, List<MultipartFile> images, List<Integer> orderIndexes) {
-        Long currentMemberId = SecurityUtil.getCurrentMemberId();
-
-        Member member = memberRepository.findById(currentMemberId)
+    public PostCreateResponseDto createPost(Long memberId, PostCreateRequestDto requestDto,
+                                            List<MultipartFile> images, List<Integer> orderIndexes) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Post post = postRepository.save(requestDto.toEntity(member));
@@ -82,9 +81,14 @@ public class PostService {
      * 게시글 수정
      */
     @Transactional
-    public PostDetailResponseDto updatePost(Long postId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
+    public PostDetailResponseDto updatePost(Long postId, Long memberId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED, "해당 게시글에 대한 수정 권한이 없습니다.");
+        }
 
         // JSON 데이터를 객체로 변환
         PostUpdateRequestDto updateRequest = parseUpdateRequestData(requestData);
@@ -162,10 +166,14 @@ public class PostService {
      * 게시글 삭제
      */
     @Transactional
-    public void deletePost(Long postId) {
+    public void deletePost(Long postId, Long memberId) {
         // 삭제할 게시글 조회 (Soft Delete 적용되지 않은 게시글만)
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED, "해당 게시글에 대한 삭제 권한이 없습니다.");
+        }
 
         // 연관된 데이터 조회
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);

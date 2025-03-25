@@ -1,15 +1,20 @@
 package ktb.community.be.global.util;
 
-import lombok.extern.slf4j.Slf4j;
+import ktb.community.be.domain.member.dao.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Slf4j
+@RequiredArgsConstructor
 public class SecurityUtil {
 
-    private SecurityUtil() { }
+    private static MemberRepository memberRepository;
+
+    public static void setMemberRepository(MemberRepository repo) {
+        SecurityUtil.memberRepository = repo;
+    }
 
     // SecurityContext 에 유저 정보가 저장되는 시점
     // Request 가 들어올 때 JwtFilter 의 doFilter 에서 저장
@@ -19,7 +24,6 @@ public class SecurityUtil {
         if (authentication == null
             || authentication.getName() == null
             || authentication.getName().equals("anonymousUser")) {
-//            throw  new RuntimeException("Security Context 에 인증 정보가 없습니다.");
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");  // 401 Unauthorized 처리
         }
 
@@ -27,12 +31,17 @@ public class SecurityUtil {
             Object principal = authentication.getPrincipal();
 
             if (principal instanceof UserDetails userDetails) {
-                return Long.parseLong(userDetails.getUsername());
+
+                Long memberId = Long.valueOf(userDetails.getUsername());
+
+                return memberRepository.findById(memberId)
+                        .orElseThrow(() -> new AuthenticationCredentialsNotFoundException("존재하지 않는 사용자입니다."))
+                        .getId();
             } else {
                 throw new AuthenticationCredentialsNotFoundException("잘못된 인증 정보입니다.");
             }
-        } catch (NumberFormatException e) {
-            throw new AuthenticationCredentialsNotFoundException("잘못된 인증 정보입니다.");
+        } catch (Exception e) {
+            throw new AuthenticationCredentialsNotFoundException("인증 정보 처리 중 오류가 발생했습니다.");
         }
     }
 }

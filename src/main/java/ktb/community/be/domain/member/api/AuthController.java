@@ -50,7 +50,12 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "현재 로그인한 사용자의 Refresh Token을 삭제하여 로그아웃합니다.")
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody TokenRequestDto tokenRequestDto) {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody TokenRequestDto tokenRequestDto
+    ) {
+        String accessToken = authorizationHeader.replace("Bearer ", "");
+        tokenRequestDto.setAccessToken(accessToken);
         authService.logout(tokenRequestDto);
         return ResponseEntity.ok(ApiResponse.success("로그아웃이 완료되었습니다."));
     }

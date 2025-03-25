@@ -12,6 +12,7 @@ import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.response.ApiResponseConstants;
+import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,9 @@ public class PostController {
         PostCreateRequestDto requestDto = parseRequestData(requestData);
         List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
 
-        PostCreateResponseDto responseDto = postService.createPost(requestDto, images, orderIndexes);
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
+        PostCreateResponseDto responseDto = postService.createPost(memberId, requestDto, images, orderIndexes);
         return ResponseEntity.ok(ApiResponse.success("게시글이 작성되었습니다.", responseDto));
     }
 
@@ -81,14 +84,17 @@ public class PostController {
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
 
-        PostDetailResponseDto updatedPost = postService.updatePost(postId, requestData, images, orderIndexesJson);
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
+        PostDetailResponseDto updatedPost = postService.updatePost(postId, memberId, requestData, images, orderIndexesJson);
         return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다.", updatedPost));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. (Soft Delete)")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
-        postService.deletePost(postId);
+        Long memberId = SecurityUtil.getCurrentMemberId();
+        postService.deletePost(postId, memberId);
         return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
     }
 

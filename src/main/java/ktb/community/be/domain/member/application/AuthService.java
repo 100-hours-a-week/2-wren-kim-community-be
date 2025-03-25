@@ -1,5 +1,7 @@
 package ktb.community.be.domain.member.application;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.dao.RefreshTokenRepository;
 import ktb.community.be.domain.member.domain.Member;
@@ -9,11 +11,13 @@ import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
+import ktb.community.be.global.security.TokenBlacklistService;
 import ktb.community.be.global.util.FileStorageService;
 import ktb.community.be.global.security.TokenDto;
 import ktb.community.be.global.security.TokenProvider;
 import ktb.community.be.global.security.TokenRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -21,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -31,6 +36,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final FileStorageService fileStorageService;
     private final MemberService memberService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * 회원가입
@@ -153,7 +159,7 @@ public class AuthService {
         }
 
         // 5. 회원 정보 가져오기
-        Member member = memberRepository.findByEmail(authentication.getName())
+        Member member = memberRepository.findById(Long.parseLong(authentication.getName()))
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
         // 6. 새로운 JWT 생성 (memberId 추가)
@@ -171,6 +177,7 @@ public class AuthService {
      */
     @Transactional
     public void logout(TokenRequestDto tokenRequestDto) {
+
         // 1. Refresh Token 검증
         if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");
@@ -184,5 +191,24 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "이미 로그아웃된 사용자입니다."));
 
         refreshTokenRepository.delete(refreshToken);
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(tokenProvider.getKey())
+                .build()
+                .parseClaimsJws(tokenRequestDto.getAccessToken())
+                .getBody();
+
+        long now = System.currentTimeMillis();
+        long exp = claims.getExpiration().getTime();
+        long remainingTime = exp - now;
+        if (remainingTime <= 0) {
+            log.warn("토큰의 남은 시간이 0 이하라 블랙리스트에 저장하지 않음");
+            return;
+        }
+
+        tokenBlacklistService.blacklistAccessToken(tokenRequestDto.getAccessToken(), remainingTime);
+
+        String accessToken = tokenRequestDto.getAccessToken();
+        tokenBlacklistService.blacklistAccessToken(accessToken, remainingTime);
     }
 }
