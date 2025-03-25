@@ -37,7 +37,7 @@ public class MemberRequestDto {
     @Pattern(regexp = "^[^\\s]+$", message = "*띄어쓰기를 없애주세요.")
     private String nickname;
 
-    private MultipartFile profileImage; // 프로필 이미지 필수 검사 필요
+    private MultipartFile profileImage;
 
     /**
      * Member 엔티티로 변환

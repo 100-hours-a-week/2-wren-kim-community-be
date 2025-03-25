@@ -45,15 +45,13 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
 
-        // 닉네임 검증 및 업데이트
-        if (nickname != null && !nickname.trim().isEmpty()) { // 빈 문자열 체크 추가
+        if (nickname != null && !nickname.trim().isEmpty()) {
             validateNickname(nickname);
             member.updateNickname(nickname);
         } else {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
         }
 
-        // 프로필 이미지 저장 및 업데이트
         if (profileImage != null && !profileImage.isEmpty()) {
             String newProfileImagePath = fileStorageService.storeProfileImage(profileImage);
             member.updateProfileImage(newProfileImagePath);
@@ -113,7 +111,8 @@ public class MemberService {
     }
 
     /**
-     * 로그인 시 탈퇴한 회원인지 확인하고 복구 가능하면 복구
+     * 로그인 시 탈퇴한 회원인지 확인하고,
+     * 탈퇴 후 30일 이내면 복구 처리 진행
      */
     public void restoreIfPossible(String email) {
         Member member = memberRepository.findByEmailIncludingDeleted(email)

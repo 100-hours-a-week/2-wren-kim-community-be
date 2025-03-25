@@ -177,7 +177,6 @@ public class AuthService {
      */
     @Transactional
     public void logout(TokenRequestDto tokenRequestDto) {
-
         // 1. Refresh Token 검증
         if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");

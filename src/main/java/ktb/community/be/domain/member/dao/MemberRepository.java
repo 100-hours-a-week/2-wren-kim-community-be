@@ -25,6 +25,8 @@ public interface MemberRepository extends JpaRepository<Member,Long> {
     @Query("SELECT m FROM Member m WHERE m.email = :email")
     Optional<Member> findByEmailIncludingDeleted(@Param("email") String email);
 
-    // 30일이 지난 탈퇴 회원 조회
+    /**
+     * 30일이 지난 탈퇴 회원 조회
+     */
     List<Member> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime dateTime);
 }
