@@ -6,24 +6,22 @@ import org.springframework.security.authentication.AuthenticationCredentialsNotF
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor
 public class SecurityUtil {
 
-    private static MemberRepository memberRepository;
-
-    public static void setMemberRepository(MemberRepository repo) {
-        SecurityUtil.memberRepository = repo;
-    }
+    private final MemberRepository memberRepository;
 
     // SecurityContext 에 유저 정보가 저장되는 시점
     // Request 가 들어올 때 JwtFilter 의 doFilter 에서 저장
-    public static Long getCurrentMemberId() {
+    public Long getCurrentMemberId() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null
-            || authentication.getName() == null
-            || authentication.getName().equals("anonymousUser")) {
+                || authentication.getName() == null
+                || authentication.getName().equals("anonymousUser")) {
             throw new AuthenticationCredentialsNotFoundException("인증이 필요합니다.");  // 401 Unauthorized 처리
         }
 

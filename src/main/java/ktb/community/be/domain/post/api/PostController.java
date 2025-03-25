@@ -28,6 +28,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final SecurityUtil securityUtil;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Operation(summary = "게시글 작성", description = "게시글을 작성합니다.")
@@ -41,7 +42,7 @@ public class PostController {
         PostCreateRequestDto requestDto = parseRequestData(requestData);
         List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
 
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
 
         PostCreateResponseDto responseDto = postService.createPost(memberId, requestDto, images, orderIndexes);
         return ResponseEntity.ok(ApiResponse.success("게시글이 작성되었습니다.", responseDto));
@@ -84,7 +85,7 @@ public class PostController {
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
 
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
 
         PostDetailResponseDto updatedPost = postService.updatePost(postId, memberId, requestData, images, orderIndexesJson);
         return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다.", updatedPost));
@@ -93,7 +94,7 @@ public class PostController {
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. (Soft Delete)")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long postId) {
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
         postService.deletePost(postId, memberId);
         return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
     }

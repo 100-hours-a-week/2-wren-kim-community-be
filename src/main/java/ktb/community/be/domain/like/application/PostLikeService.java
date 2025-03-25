@@ -21,6 +21,7 @@ public class PostLikeService {
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final MemberRepository memberRepository;
+    private final SecurityUtil securityUtil;
 
     /**
      * 사용자가 게시글에 좋아요를 추가/취소하는 기능
@@ -28,7 +29,7 @@ public class PostLikeService {
     @Transactional
     public boolean toggleLike(Long postId) {
 
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));

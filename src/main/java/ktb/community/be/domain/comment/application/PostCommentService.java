@@ -25,6 +25,7 @@ public class PostCommentService {
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+    private final SecurityUtil securityUtil;
 
     /**
      * 댓글 작성
@@ -32,7 +33,7 @@ public class PostCommentService {
     @Transactional
     public CommentResponseDto createComment(Long postId, CommentRequestDto requestDto) {
 
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -57,7 +58,7 @@ public class PostCommentService {
     @Transactional
     public CommentResponseDto createReply(Long postId, Long parentCommentId, CommentRequestDto requestDto) {
 
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        Long memberId = securityUtil.getCurrentMemberId();
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));

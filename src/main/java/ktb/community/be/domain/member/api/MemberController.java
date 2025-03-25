@@ -18,11 +18,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class MemberController {
 
     private final MemberService memberService;
+    private final SecurityUtil securityUtil;
 
     @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MemberResponseDto>> findMemberInfoById() {
-        MemberResponseDto responseDto = memberService.findMemberInfoById(SecurityUtil.getCurrentMemberId());
+        MemberResponseDto responseDto = memberService.findMemberInfoById(securityUtil.getCurrentMemberId());
         return ResponseEntity.ok(ApiResponse.success("회원 정보를 조회하였습니다.", responseDto));
     }
 
@@ -39,21 +40,21 @@ public class MemberController {
             @RequestPart(value = "nickname", required = false) String nickname,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
-        MemberResponseDto updatedMember = memberService.updateMemberInfo(SecurityUtil.getCurrentMemberId(), nickname, profileImage);
+        MemberResponseDto updatedMember = memberService.updateMemberInfo(securityUtil.getCurrentMemberId(), nickname, profileImage);
         return ResponseEntity.ok(ApiResponse.success("회원 정보가 수정되었습니다.", updatedMember));
     }
 
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 사용자의 비밀번호를 변경합니다.")
     @PutMapping("/me/password")
     public ResponseEntity<ApiResponse<Void>> updatePassword(@Valid @RequestBody PasswordUpdateRequestDto passwordUpdateRequestDto) {
-        memberService.updatePassword(SecurityUtil.getCurrentMemberId(), passwordUpdateRequestDto);
+        memberService.updatePassword(securityUtil.getCurrentMemberId(), passwordUpdateRequestDto);
         return ResponseEntity.ok(ApiResponse.success("비밀번호가 변경되었습니다."));
     }
 
     @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 계정을 비활성화합니다.")
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> deleteMember() {
-        memberService.deleteMember(SecurityUtil.getCurrentMemberId());
+        memberService.deleteMember(securityUtil.getCurrentMemberId());
         return ResponseEntity.ok(ApiResponse.success("회원 탈퇴가 완료되었습니다."));
     }
 }
