@@ -17,7 +17,7 @@ public class CommentHierarchyBuilder {
 
         // 모든 댓글을 Map에 저장 (삭제된 댓글 포함)
         for (PostComment comment : comments) {
-            CommentResponseDto commentDto = CommentResponseDto.from(comment); // 통일
+            CommentResponseDto commentDto = CommentResponseDto.from(comment);
             commentMap.put(comment.getId(), commentDto);
         }
 
