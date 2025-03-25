@@ -33,12 +33,6 @@ public class PostLike extends BaseTimeEntity {
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = true)
-    private LocalDateTime updatedAt;
-
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
@@ -49,14 +43,12 @@ public class PostLike extends BaseTimeEntity {
     @PrePersist
     public void prePersist() {
         this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
-        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
     }
 
     // 사용자가 직접 좋아요 취소
     public void softDeleteByMember() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
         this.softDeleteType = SoftDeleteType.MEMBER_ACTION;
     }
 
@@ -64,7 +56,6 @@ public class PostLike extends BaseTimeEntity {
     public void softDeleteByPostDeletion() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
         this.softDeleteType = SoftDeleteType.POST_DELETION;
     }
 
@@ -73,13 +64,7 @@ public class PostLike extends BaseTimeEntity {
         if (this.softDeleteType == SoftDeleteType.MEMBER_ACTION) {
             this.isDeleted = false;
             this.deletedAt = null;
-            this.updatedAt = LocalDateTime.now();
             this.softDeleteType = null;
         }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 }

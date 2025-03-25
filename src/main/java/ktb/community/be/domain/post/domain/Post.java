@@ -54,12 +54,6 @@ public class Post extends BaseTimeEntity {
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = true)
-    private LocalDateTime updatedAt;
-
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
@@ -80,18 +74,11 @@ public class Post extends BaseTimeEntity {
         this.viewCount = (this.viewCount == null) ? 0 : this.viewCount;
         this.commentCount = (this.commentCount == null) ? 0 : this.commentCount;
         this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
-        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateCommentCount(int count) {
@@ -101,6 +88,5 @@ public class Post extends BaseTimeEntity {
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 }

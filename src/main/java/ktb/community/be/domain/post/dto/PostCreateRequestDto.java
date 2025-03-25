@@ -28,7 +28,6 @@ public class PostCreateRequestDto {
                 .viewCount(0)  // 기본값 명시적으로 설정
                 .commentCount(0)
                 .isDeleted(false)
-                .createdAt(LocalDateTime.now())
                 .build();
     }
 }

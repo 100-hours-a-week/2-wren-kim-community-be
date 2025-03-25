@@ -47,12 +47,6 @@ public class Member extends BaseTimeEntity {
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = true)
-    private LocalDateTime updatedAt;
-
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
@@ -81,14 +75,12 @@ public class Member extends BaseTimeEntity {
     public void prePersist() {
         this.isActive = (this.isActive == null) ? true : this.isActive;
         this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
-        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
     }
 
     public void softDelete() {
         this.isDeleted = true;
         this.isActive = false;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void markAsDeleted() {
@@ -106,23 +98,15 @@ public class Member extends BaseTimeEntity {
         this.deletedAt = null;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
     public void updateNickname(String newNickname) {
         this.nickname = newNickname;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateProfileImage(String newProfileImageUrl) {
         this.profileImageUrl = newProfileImageUrl;
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updatePassword(String newPassword) {
         this.password = newPassword;
-        this.updatedAt = LocalDateTime.now();
     }
 }

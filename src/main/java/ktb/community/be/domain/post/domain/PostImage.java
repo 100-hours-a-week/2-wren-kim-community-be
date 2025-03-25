@@ -36,36 +36,22 @@ public class PostImage extends BaseTimeEntity {
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = true)
-    private LocalDateTime updatedAt;
-
     @Column(nullable = true)
     private LocalDateTime deletedAt;
 
     @PrePersist
     public void prePersist() {
         this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
-        this.createdAt = (this.createdAt == null) ? LocalDateTime.now() : this.createdAt;
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void softDelete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateOrderIndex(int newOrderIndex) {
         if (!this.orderIndex.equals(newOrderIndex)) {
             this.orderIndex = newOrderIndex;
-            this.updatedAt = LocalDateTime.now();
         }
     }
 }

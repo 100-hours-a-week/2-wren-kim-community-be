@@ -42,7 +42,6 @@ public class PostLikeService {
                     .member(member)
                     .isDeleted(false)
                     .softDeleteType(null)
-                    .createdAt(LocalDateTime.now())
                     .build();
 
             postLikeRepository.save(postLike);
