@@ -38,12 +38,9 @@ public class PostController {
             @RequestPart("data") String requestData,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
-
         PostCreateRequestDto requestDto = parseRequestData(requestData);
         List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
-
         Long memberId = securityUtil.getCurrentMemberId();
-
         PostCreateResponseDto responseDto = postService.createPost(memberId, requestDto, images, orderIndexes);
         return ResponseEntity.ok(ApiResponse.success("게시글이 작성되었습니다.", responseDto));
     }
@@ -84,9 +81,7 @@ public class PostController {
             @RequestPart("data") String requestData,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "orderIndexes", required = false) String orderIndexesJson) {
-
         Long memberId = securityUtil.getCurrentMemberId();
-
         PostDetailResponseDto updatedPost = postService.updatePost(postId, memberId, requestData, images, orderIndexesJson);
         return ResponseEntity.ok(ApiResponse.success("게시글이 수정되었습니다.", updatedPost));
     }
@@ -104,7 +99,6 @@ public class PostController {
     public ResponseEntity<ApiResponse<List<PostListResponseDto>>> getAllPosts(
             @RequestParam(required = false) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int size) {
-
         List<PostListResponseDto> posts = postService.getAllPosts(cursor, PageRequest.of(0, size));
         return ResponseEntity.ok(ApiResponse.success("게시글 목록을 조회했습니다.", posts));
     }

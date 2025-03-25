@@ -11,7 +11,6 @@ import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
-import ktb.community.be.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,15 +24,12 @@ public class PostCommentService {
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
-    private final SecurityUtil securityUtil;
 
     /**
      * 댓글 작성
      */
     @Transactional
-    public CommentResponseDto createComment(Long postId, CommentRequestDto requestDto) {
-
-        Long memberId = securityUtil.getCurrentMemberId();
+    public CommentResponseDto createComment(Long postId, Long memberId, CommentRequestDto requestDto) {
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -56,10 +52,7 @@ public class PostCommentService {
      * 대댓글 작성
      */
     @Transactional
-    public CommentResponseDto createReply(Long postId, Long parentCommentId, CommentRequestDto requestDto) {
-
-        Long memberId = securityUtil.getCurrentMemberId();
-
+    public CommentResponseDto createReply(Long postId, Long parentCommentId, Long memberId, CommentRequestDto requestDto) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
@@ -84,9 +77,13 @@ public class PostCommentService {
      * 댓글 수정
      */
     @Transactional
-    public CommentResponseDto updateComment(Long commentId, CommentRequestDto requestDto) {
+    public CommentResponseDto updateComment(Long commentId, Long memberId, CommentRequestDto requestDto) {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
+
+        if (!comment.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED, "댓글 수정 권한이 없습니다.");
+        }
 
         comment.updateContent(requestDto.getContent());
         postCommentRepository.save(comment);
@@ -98,16 +95,17 @@ public class PostCommentService {
      * 댓글 삭제 (Soft Delete)
      */
     @Transactional
-    public void deleteComment(Long commentId) {
+    public void deleteComment(Long commentId, Long memberId) {
         Optional<PostComment> optionalComment = postCommentRepository.findByIdIncludingDeleted(commentId);
 
-        if (optionalComment.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다.");
+        PostComment comment = optionalComment
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
+
+        if (!comment.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED, "댓글 삭제 권한이 없습니다.");
         }
 
-        PostComment comment = optionalComment.get();
         comment.softDelete();
-
         comment.updateContent("삭제된 댓글입니다.");
         postCommentRepository.save(comment);
 

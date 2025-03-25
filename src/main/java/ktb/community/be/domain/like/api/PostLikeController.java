@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.*;
 public class PostLikeController {
 
     private final PostLikeService postLikeService;
+    private final SecurityUtil securityUtil;
 
     @Operation(summary = "게시글 좋아요 추가/취소", description = "사용자가 게시글에 좋아요를 누르면 추가되고, 다시 누르면 취소됩니다.")
     @ApiResponseConstants.CommonResponses
     @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<Boolean>> toggleLike(@PathVariable Long postId) {
-        boolean isLiked = postLikeService.toggleLike(postId);
+        Long memberId = securityUtil.getCurrentMemberId();
+        boolean isLiked = postLikeService.toggleLike(postId, memberId);
         String message = isLiked ? "게시글에 좋아요를 눌렀습니다." : "게시글 좋아요를 취소했습니다.";
         return ResponseEntity.ok(ApiResponse.success(message, isLiked));
     }
