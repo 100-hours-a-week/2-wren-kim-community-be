@@ -74,7 +74,6 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 | --- | --- |
 | JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리 |
 | 댓글/이미지의 계층 구조 or 중복 조회 | Stream API + HashMap 계층 매핑 + Soft Delete 처리 |
-| 댓글/이미지의 계층 구조 or 중복 조회 | Stream API + HashMap 계층 매핑 + Soft Delete 처리 |
 | 게시글 수정 시 모든 이미지를 삭제/재등록 | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert |
 | Access Token 무효화가 어려움 | Access Token 무효화가 어려움 |
 
