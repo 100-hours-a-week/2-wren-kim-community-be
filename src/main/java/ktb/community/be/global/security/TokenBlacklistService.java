@@ -14,13 +14,21 @@ public class TokenBlacklistService {
 
     private final StringRedisTemplate redisTemplate;
 
+    /**
+     * accessToken을 블랙리스트에 등록 (TTL 기반)
+     */
     public void blacklistAccessToken(String accessToken, long expirationTime) {
         String key = "blacklist:" + accessToken;
+
         redisTemplate.opsForValue().set(key, "true", expirationTime, TimeUnit.MILLISECONDS);
-        log.info("Redis에 블랙리스트 등록: {} ({}ms)", key, expirationTime);
+        log.info("AccessToken 블랙리스트 등록 완료: {} ({}ms)", accessToken, expirationTime);
     }
 
+    /**
+     * 블랙리스트 여부 조회 (TTL 키만으로 확인)
+     */
     public boolean isBlacklisted(String accessToken) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + accessToken));
+        String key = "blacklist:" + accessToken;
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 }
