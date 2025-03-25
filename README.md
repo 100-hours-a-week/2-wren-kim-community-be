@@ -87,3 +87,14 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 - 이미지 업로드 → AWS S3 또는 CloudFront CDN 적용
 - 캐싱 전략 → Redis 활용한 조회수/좋아요 수/인기글 캐싱
 - Kafka, Event 기반 비동기 처리 고려 (ex. 조회수, 좋아요 기록)
+
+<details markdown="1">
+  <summary>마무리 및 느낀 점</summary>
+  <div>
+    <ul>
+      <li>이 프로젝트는 단순한 CRUD 구현을 넘어, 성능과 구조, 보안, 사용자 경험을 모두 고려하며 실무적인 관점에서 고민한 작업이었습니다.</li>
+      <li>JPA 최적화, 계층 구조 설계, 트랜잭션 처리, Redis 블랙리스트 구축 등, 단기간의 실습이 아닌 실제 서비스 개발을 목표로 설계·개발·테스트를 반복했습니다.</li>
+      <li>앞으로도 "왜 이렇게 설계해야 하는가?"를 고민하는 개발자로서 성장을 이어가겠습니다.</li>
+    </ul>
+  </div>
+</details>
