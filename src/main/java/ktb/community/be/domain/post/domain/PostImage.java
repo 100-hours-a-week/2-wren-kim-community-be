@@ -33,6 +33,7 @@ public class PostImage extends BaseTimeEntity {
     @Column(columnDefinition = "INT UNSIGNED DEFAULT 0", nullable = false)
     private Integer orderIndex;
 
+    @Builder.Default
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 

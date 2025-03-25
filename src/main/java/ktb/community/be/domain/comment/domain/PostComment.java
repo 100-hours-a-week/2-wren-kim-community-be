@@ -41,6 +41,7 @@ public class PostComment extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Builder.Default
     @Column(columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private Boolean isDeleted = false;
 

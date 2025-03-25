@@ -30,6 +30,7 @@ public class PostLike extends BaseTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @Builder.Default
     @Column(columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private Boolean isDeleted = false;
 
