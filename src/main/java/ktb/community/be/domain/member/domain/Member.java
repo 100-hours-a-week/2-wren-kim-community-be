@@ -9,7 +9,9 @@ import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "member", uniqueConstraints = {
@@ -86,11 +88,18 @@ public class Member extends BaseTimeEntity {
 
     public void markAsDeleted() {
         if (!this.email.startsWith("deleted_")) {
-            this.email = "deleted_" + this.email;
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+            String randomSuffix = UUID.randomUUID().toString().substring(0, 6);
+            this.email = String.format("deleted_%s_%s", this.email, randomSuffix);
         }
+
         if (!this.nickname.startsWith("deleted_")) {
             this.nickname = "deleted_" + this.nickname;
         }
+    }
+
+    public void updateEmail(String newEmail) {
+        this.email = newEmail;
     }
 
     public void restoreAccount() {

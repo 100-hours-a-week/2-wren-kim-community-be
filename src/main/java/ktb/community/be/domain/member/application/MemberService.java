@@ -118,35 +118,60 @@ public class MemberService {
         Member member = memberRepository.findByEmailIncludingDeleted(email)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
 
-        if (!member.getIsDeleted()) { // 삭제되지 않은 계정이면 실행 안 함
-            return;
+        // 삭제되지 않은 계정이면 복구할 필요 없음
+        if (!member.getIsDeleted()) return;
+
+        LocalDateTime deletionTime = member.getDeletedAt();
+
+        // 탈퇴한 지 30일 이내인 경우에만 복구 가능
+        boolean isRestorable = deletionTime != null &&
+                deletionTime.plusDays(30).isAfter(LocalDateTime.now());
+
+        if (!isRestorable) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요.");
         }
 
-        if (member.getIsDeleted()) {
-            LocalDateTime deletionTime = member.getDeletedAt();
-            if (deletionTime != null && deletionTime.plusDays(30).isAfter(LocalDateTime.now())) {
-                member.restoreAccount(); // 30일 이내면 복구
+        // deleted_ 접두사 제거 후 원래 닉네임과 이메일 추출
+        String originalNickname = member.getNickname();
+        if (originalNickname.startsWith("deleted_")) {
+            originalNickname = originalNickname.replaceFirst("deleted_", "");
+        }
 
-                // 닉네임이 deleted_로 변경된 경우 원래 닉네임으로 복원
-                if (member.getNickname().startsWith("deleted_")) {
-                    member.updateNickname(member.getNickname().replace("deleted_", ""));
-                }
-
-            } else {
-                throw new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요.");
+        String originalEmail = member.getEmail();
+        if (originalEmail.startsWith("deleted_")) {
+            String[] parts = originalEmail.split("_", 3); // "deleted", "email@example.com", "UUID"
+            if (parts.length >= 3) {
+                originalEmail = parts[1];
             }
         }
+
+        // 이메일/닉네임 중복 여부 체크 (자기 자신 제외)
+        if (memberRepository.existsByEmail(originalEmail) && !originalEmail.equals(member.getEmail())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*복구할 수 없습니다. 이미 사용 중인 이메일입니다.");
+        }
+
+        if (memberRepository.existsByNickname(originalNickname) && !originalNickname.equals(member.getNickname())) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*복구할 수 없습니다. 이미 사용 중인 닉네임입니다.");
+        }
+
+        // 복구 처리
+        member.restoreAccount();
+        member.updateEmail(originalEmail);
+        member.updateNickname(originalNickname);
     }
 
     /**
      * 30일이 지난 탈퇴 회원의 이메일/닉네임을 deleted_로 변경
      */
-    @Transactional
+    @Transactional(readOnly = false)
     public void processExpiredDeletedAccounts() {
         LocalDateTime thresholdDate = LocalDateTime.now().minusDays(30);
         List<Member> expiredMembers = memberRepository.findAllByIsDeletedTrueAndDeletedAtBefore(thresholdDate);
 
+        System.out.println("만료된 회원 수: " + expiredMembers.size());
+
         for (Member member : expiredMembers) {
+            System.out.println("삭제 처리 대상: " + member.getEmail());
             member.markAsDeleted();
         }
     }
