@@ -21,7 +21,7 @@ public class CommentHierarchyBuilder {
             commentMap.put(comment.getId(), commentDto);
         }
 
-        // 부모-자식 관계를 올바르게 매핑
+        // 부모-자식 관계 매핑
         for (PostComment comment : comments) {
             Long parentId = Optional.ofNullable(comment.getParentComment())
                     .map(PostComment::getId)
@@ -40,7 +40,7 @@ public class CommentHierarchyBuilder {
             }
         }
 
-        // 최상위 댓글을 정렬 (삭제된 댓글이 중간에 끼지 않도록)
+        // 최상위 댓글을 정렬
         topLevelComments.sort(Comparator.comparing(CommentResponseDto::getCreatedAt));
 
         return topLevelComments;
