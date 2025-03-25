@@ -70,13 +70,13 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 ```
 
 ## 주요 설계/개선 고민
-| 문제 | 해결 |
-| --- | --- |
-| JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리 |
+| 문제 | 해결                                          |
+| --- |---------------------------------------------|
+| JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리      |
 | 댓글/이미지의 계층 구조 or 중복 조회 | Stream API + HashMap 계층 매핑 + Soft Delete 처리 |
-| 게시글 수정 시 모든 이미지를 삭제/재등록 | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert |
-| 탈퇴한 회원의 이메일이 유니크 제약을 방해함 | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보 |
-| Access Token 무효화가 어려움 | Redis Bloom Filter + TTL 기반 블랙리스트 도입 |
+| 게시글 수정 시 모든 이미지를 삭제/재등록 | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert      |
+| 탈퇴한 회원의 이메일이 유니크 제약을 방해함 | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보          |
+| Access Token 무효화가 어려움 | Redis Bloom Filter + TTL 기반 블랙리스트로 처리       |
 
 ## 예외 및 테스트 케이스 설계
 - 커스텀 예외 코드 (ErrorCode) 기반 글로벌 예외 처리
