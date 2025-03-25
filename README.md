@@ -22,7 +22,7 @@
 - 로그인 (JWT 기반 인증)
 - 회원 정보 수정 (닉네임, 프로필 이미지)
 - 비밀번호 변경 (복잡도 검사 포함)
-- 회원 탈퇴 (Soft Delete + 30일 후 데이터 익명화)
+- 회원 탈퇴 (Soft Delete + 30일 후 자동 익명화 + 복구 기능)
 
 ### 게시글
 - 게시글 작성 (다중 이미지 업로드, 트랜잭션 처리)
@@ -75,7 +75,8 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 | JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리 |
 | 댓글/이미지의 계층 구조 or 중복 조회 | Stream API + HashMap 계층 매핑 + Soft Delete 처리 |
 | 게시글 수정 시 모든 이미지를 삭제/재등록 | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert |
-| Access Token 무효화가 어려움 | Access Token 무효화가 어려움 |
+| 탈퇴한 회원의 이메일이 유니크 제약을 방해함 | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보 |
+| Access Token 무효화가 어려움 | Redis Bloom Filter + TTL 기반 블랙리스트 도입 |
 
 ## 예외 및 테스트 케이스 설계
 - 커스텀 예외 코드 (ErrorCode) 기반 글로벌 예외 처리
@@ -86,6 +87,7 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 - 이미지 업로드 → AWS S3 또는 CloudFront CDN 적용
 - 캐싱 전략 → Redis 활용한 조회수/좋아요 수/인기글 캐싱
 - Kafka, Event 기반 비동기 처리 고려 (ex. 조회수, 좋아요 기록)
+- 탈퇴 회원 복구에 대한 UI 개선 및 admin 기능 연동
 
 <details markdown="1">
   <summary>마무리 및 느낀 점</summary>
