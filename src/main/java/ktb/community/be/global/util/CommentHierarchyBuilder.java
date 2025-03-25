@@ -17,9 +17,7 @@ public class CommentHierarchyBuilder {
 
         // 모든 댓글을 Map에 저장 (삭제된 댓글 포함)
         for (PostComment comment : comments) {
-            CommentResponseDto commentDto = comment.getIsDeleted()
-                    ? CommentResponseDto.deletedPlaceholder(comment) // 삭제된 댓글도 포함
-                    : CommentResponseDto.from(comment);
+            CommentResponseDto commentDto = CommentResponseDto.from(comment); // 통일
             commentMap.put(comment.getId(), commentDto);
         }
 
@@ -35,11 +33,10 @@ public class CommentHierarchyBuilder {
                 topLevelComments.add(currentComment);
             } else {
                 // 부모 댓글이 삭제되었더라도 계층 유지
-                CommentResponseDto parentComment = commentMap.getOrDefault(
-                        parentId,
-                        CommentResponseDto.deletedPlaceholder(comment.getParentComment())
-                );
-                parentComment.getReplies().add(currentComment);
+                CommentResponseDto parentComment = commentMap.get(parentId);
+                if (parentComment != null) {
+                    parentComment.getReplies().add(currentComment);
+                }
             }
         }
 

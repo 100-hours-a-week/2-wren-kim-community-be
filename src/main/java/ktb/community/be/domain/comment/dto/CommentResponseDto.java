@@ -26,29 +26,17 @@ public class CommentResponseDto {
     private final List<CommentResponseDto> replies = new ArrayList<>();
 
     public static CommentResponseDto from(PostComment comment) {
-        return CommentResponseDto.builder()
-                .id(comment.getId())
-                .content(comment.getContent())
-                .createdAt(comment.getCreatedAt())
-                .updatedAt(comment.getUpdatedAt())
-                .memberNickname(comment.getMember().getNickname() != null ? comment.getMember().getNickname() : "(알수없음)")
-                .memberProfileImageUrl(comment.getMember().getProfileImageUrl())
-                .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
-                .isDeleted(comment.getIsDeleted())
-                .build();
-    }
+        boolean isDeleted = comment.getIsDeleted();
 
-    public static CommentResponseDto deletedPlaceholder(PostComment comment) {
         return CommentResponseDto.builder()
                 .id(comment.getId())
-                .content("삭제된 댓글입니다.") // 삭제된 댓글 기본 메시지
+                .content(isDeleted ? "삭제된 댓글입니다." : comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .memberNickname("(알수없음)")
-                .memberProfileImageUrl(null)
-                .isDeleted(true)
+                .memberNickname(isDeleted ? "(알수없음)" : comment.getMember().getNickname())
+                .memberProfileImageUrl(isDeleted ? null : comment.getMember().getProfileImageUrl())
                 .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
-                .replies(new ArrayList<>()) // 기본적으로 빈 리스트 추가
+                .isDeleted(isDeleted)
                 .build();
     }
 }

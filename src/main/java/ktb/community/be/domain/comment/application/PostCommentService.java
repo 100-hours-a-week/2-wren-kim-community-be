@@ -106,7 +106,6 @@ public class PostCommentService {
         }
 
         comment.softDelete();
-        comment.updateContent("삭제된 댓글입니다.");
         postCommentRepository.save(comment);
 
         updateCommentCount(comment.getPost());
