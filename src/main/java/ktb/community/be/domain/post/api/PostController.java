@@ -12,7 +12,7 @@ import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.response.ApiResponseConstants;
-import ktb.community.be.global.util.SecurityUtil;
+import ktb.community.be.global.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;

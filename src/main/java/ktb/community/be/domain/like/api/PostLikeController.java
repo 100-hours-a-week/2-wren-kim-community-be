@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import ktb.community.be.domain.like.application.PostLikeService;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.response.ApiResponseConstants;
-import ktb.community.be.global.util.SecurityUtil;
+import ktb.community.be.global.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

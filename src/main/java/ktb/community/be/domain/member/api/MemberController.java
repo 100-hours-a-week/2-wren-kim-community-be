@@ -6,7 +6,7 @@ import ktb.community.be.domain.member.application.MemberService;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
 import ktb.community.be.domain.member.dto.PasswordUpdateRequestDto;
 import ktb.community.be.global.response.ApiResponse;
-import ktb.community.be.global.util.SecurityUtil;
+import ktb.community.be.global.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
