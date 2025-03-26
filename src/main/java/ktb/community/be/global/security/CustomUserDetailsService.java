@@ -1,4 +1,4 @@
-package ktb.community.be.domain.member.application;
+package ktb.community.be.global.security;
 
 import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.domain.Member;
