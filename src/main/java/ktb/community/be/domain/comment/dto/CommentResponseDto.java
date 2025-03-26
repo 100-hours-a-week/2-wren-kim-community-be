@@ -2,6 +2,7 @@ package ktb.community.be.domain.comment.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.member.domain.Member;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -26,17 +27,23 @@ public class CommentResponseDto {
     private final List<CommentResponseDto> replies = new ArrayList<>();
 
     public static CommentResponseDto from(PostComment comment) {
-        boolean isDeleted = comment.getIsDeleted();
+        boolean isCommentDeleted = comment.getIsDeleted();
+        Member member = comment.getMember();
+
+        boolean isMemberDeleted = member == null || member.getIsDeleted();
+
+        String nickname = isCommentDeleted || isMemberDeleted ? "(알수없음)" : member.getNickname();
+        String profileImageUrl = isCommentDeleted || isMemberDeleted ? null : member.getProfileImageUrl();
 
         return CommentResponseDto.builder()
                 .id(comment.getId())
-                .content(isDeleted ? "삭제된 댓글입니다." : comment.getContent())
+                .content(isCommentDeleted ? "삭제된 댓글입니다." : comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .memberNickname(isDeleted ? "(알수없음)" : comment.getMember().getNickname())
-                .memberProfileImageUrl(isDeleted ? null : comment.getMember().getProfileImageUrl())
+                .memberNickname(nickname)
+                .memberProfileImageUrl(profileImageUrl)
                 .parentCommentId(comment.getParentComment() != null ? comment.getParentComment().getId() : null)
-                .isDeleted(isDeleted)
+                .isDeleted(isCommentDeleted)
                 .build();
     }
 }
