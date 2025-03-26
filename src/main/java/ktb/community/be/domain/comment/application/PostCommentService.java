@@ -86,7 +86,6 @@ public class PostCommentService {
         }
 
         comment.updateContent(requestDto.getContent());
-        postCommentRepository.save(comment);
 
         return CommentResponseDto.from(comment);
     }
