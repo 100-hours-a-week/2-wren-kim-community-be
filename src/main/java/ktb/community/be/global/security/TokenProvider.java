@@ -44,6 +44,15 @@ public class TokenProvider {
         this.memberRepository = memberRepository;
     }
 
+    public String getSubject(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
     public TokenDto generateTokenDto(Authentication authentication, Long memberId) {
         // 권한들 가져오기
         String authorities = authentication.getAuthorities().stream()
@@ -63,6 +72,7 @@ public class TokenProvider {
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
+                .setSubject(memberId.toString())
                 .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();

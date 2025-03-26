@@ -131,35 +131,66 @@ public class AuthService {
      */
     @Transactional
     public TokenDto reissue(TokenRequestDto tokenRequestDto) {
-        // 1. Refresh Token 검증
-        if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");
-        }
+        String accessToken = tokenRequestDto.getAccessToken();
+        String refreshToken = tokenRequestDto.getRefreshToken();
 
-        // 2. Access Token 에서 Member ID 가져오기
-        Authentication authentication = tokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
+        // 1. Refresh Token 유효성 검증
+        validateRefreshToken(refreshToken);
 
-        // 3. 저장된 Refresh Token 가져오기
-        RefreshToken refreshToken = refreshTokenRepository.findByKey(authentication.getName())
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "로그아웃된 사용자입니다."));
+        // 2. Access Token 에서 Member ID 추출
+        Authentication authentication = tokenProvider.getAuthentication(accessToken);
+        String memberId = authentication.getName();
 
-        // 4. Refresh Token 일치 여부 확인
-        if (!refreshToken.getValue().equals(tokenRequestDto.getRefreshToken())) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "토큰의 유저 정보가 일치하지 않습니다.");
-        }
+        // 3. accessToken vs refreshToken 의 subject 일치 여부 확인
+        validateTokenSubjectsMatch(memberId, refreshToken, accessToken);
 
-        // 5. 회원 정보 가져오기
-        Member member = memberRepository.findById(Long.parseLong(authentication.getName()))
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
+        // 4. 저장된 Refresh Token 조회
+        RefreshToken savedRefreshToken = getSavedRefreshTokenOrThrow(memberId);
 
-        // 6. 새로운 JWT 생성 (memberId 추가)
+        // 5. 저장된 Refresh Token 과 요청된 Refresh Token 비교
+        checkRefreshTokenMatches(savedRefreshToken, refreshToken, memberId, accessToken);
+
+        // 6. 회원 정보 조회
+        Member member = getMemberOrThrow(memberId);
+
+        // 7. 새로운 토큰 발급 및 저장
         TokenDto tokenDto = tokenProvider.generateTokenDto(authentication, member.getId());
-
-        // 7. Refresh Token 업데이트
-        RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken());
+        RefreshToken newRefreshToken = savedRefreshToken.updateValue(tokenDto.getRefreshToken());
         refreshTokenRepository.save(newRefreshToken);
 
         return tokenDto;
+    }
+
+    private void validateRefreshToken(String refreshToken) {
+        if (!tokenProvider.validateToken(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "유효하지 않은 Refresh Token입니다.");
+        }
+    }
+
+    private void validateTokenSubjectsMatch(String memberId, String refreshToken, String accessToken) {
+        String refreshSubject = tokenProvider.getSubject(refreshToken);
+        if (!memberId.equals(refreshSubject)) {
+            log.warn("[토큰 위조 의심] accessToken의 유저ID: {}, refreshToken의 subject: {}", memberId, refreshSubject);
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "토큰의 유저 정보가 일치하지 않습니다.");
+        }
+    }
+
+    private RefreshToken getSavedRefreshTokenOrThrow(String memberId) {
+        return refreshTokenRepository.findByKey(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "로그아웃된 사용자입니다."));
+    }
+
+    private void checkRefreshTokenMatches(RefreshToken savedToken, String incomingToken, String memberId, String accessToken) {
+        if (!savedToken.getValue().equals(incomingToken)) {
+            log.warn("[토큰 위조 의심] memberId: {}, accessToken은 {}, refreshToken은 DB에 존재하지 않음 또는 일치하지 않음",
+                    memberId, accessToken);
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "토큰의 유저 정보가 일치하지 않습니다.");
+        }
+    }
+
+    private Member getMemberOrThrow(String memberId) {
+        return memberRepository.findById(Long.parseLong(memberId))
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
     }
 
     /**
