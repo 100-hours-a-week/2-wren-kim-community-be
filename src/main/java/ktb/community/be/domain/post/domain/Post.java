@@ -77,6 +77,13 @@ public class Post extends BaseTimeEntity {
         this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
     }
 
+    public void increaseViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 0;
+        }
+        this.viewCount++;
+    }
+
     public void update(String title, String content) {
         this.title = title;
         this.content = content;

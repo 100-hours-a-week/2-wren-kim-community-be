@@ -38,7 +38,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final MemberRepository memberRepository;
     private final FileStorageService fileStorageService;
-    private final ViewCountService viewCountService;
+//    private final ViewCountService viewCountService;
 
     /**
      * 게시글 작성
@@ -61,13 +61,12 @@ public class PostService {
     /**
      * 게시글 상세 조회
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
-        // 비동기로 조회수 증가 실행
-        viewCountService.incrementViewCount(postId);
+        post.increaseViewCount();
 
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
