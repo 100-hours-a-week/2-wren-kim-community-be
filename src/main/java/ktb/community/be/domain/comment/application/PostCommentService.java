@@ -96,9 +96,7 @@ public class PostCommentService {
      */
     @Transactional
     public void deleteComment(Long commentId, Long memberId) {
-        Optional<PostComment> optionalComment = postCommentRepository.findByIdIncludingDeleted(commentId);
-
-        PostComment comment = optionalComment
+        PostComment comment = postCommentRepository.findByIdIncludingDeleted(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
 
         if (!comment.getMember().getId().equals(memberId)) {
