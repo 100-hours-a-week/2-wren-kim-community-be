@@ -34,6 +34,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     /**
      * 커서 기반 게시글 목록 조회 (최신순)
      */
+    @EntityGraph(attributePaths = {"member"})
     @Query("SELECT p FROM Post p " +
             "WHERE p.deletedAt IS NULL " +
             "AND (:cursor IS NULL OR p.createdAt < :cursor) " +
