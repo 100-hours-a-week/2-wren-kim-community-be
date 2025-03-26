@@ -1,7 +1,8 @@
 # 게시글 커뮤니티 백엔드 서버
 
 > **Spring Boot + JPA 기반의 커뮤니티 API 서버입니다.** <br>
-> 게시글, 댓글, 좋아요, 회원가입 및 인증, 회원 탈퇴 등 전체 흐름을 도메인 주도적으로 설계하고, **JPA 성능 최적화, 트랜잭션 처리, 예외 처리, 인증 흐름 설계** 등을 고민하며 개발했습니다.
+> 게시글, 댓글, 좋아요, 회원가입 및 인증, 회원 탈퇴 등 전체 흐름을 도메인 주도적으로 설계하고,
+> **JPA 성능 최적화, 트랜잭션 처리, 예외 처리, 인증 흐름 설계** 등을 고민하며 개발했습니다.
 
 ## 기술 스택
 
@@ -29,10 +30,10 @@
 - 게시글 상세 조회 (작성자, 이미지, 댓글, 좋아요 포함 / N+1 문제 해결)
 - 게시글 수정 (Soft Delete + 순서 변경, 변경 감지 활용)
 - 게시글 삭제 (연관 데이터 일괄 Soft Delete + Batch Update)
-- 게시글 전체 조회 (커서 기반 페이지네이션)
+- 게시글 전체 조회 (커서 기반 페이지네이션, 탈퇴 회원 닉네임 구분 처리)
 
 ### 댓글 & 좋아요
-- 댓글/대댓글 작성, 수정, 삭제 (계층 구조 유지 + Soft Delete)
+- 댓글/대댓글 작성, 수정, 삭제 (계층 구조 유지 + Soft Delete, 탈퇴 회원 닉네임 구분 처리)
 - 좋아요 추가/취소 (토글 방식, Soft Delete 적용)
 - 좋아요 개수 조회 API 분리 → 성능 최적화
 
@@ -43,40 +44,32 @@
 
 ## 성능 최적화 핵심 포인트
 ### 1. JPA N+1 문제 해결
-- @EntityGraph + @BatchSize + @Formula를 조합하여, 한 쿼리로 작성자, 댓글, 좋아요 수, 이미지를 함께 조회
+- `@EntityGraph` + `@BatchSize` + `@Formula`를 조합하여, 한 쿼리로 작성자, 댓글, 좋아요 수, 이미지를 함께 조회
 - Hibernate SQL 로그 기반으로 실제 쿼리 실행 수를 분석하고 튜닝
-
-```java
-@EntityGraph(attributePaths = {"author"})
-@Query("SELECT p FROM Post p WHERE p.id = :id AND p.deletedAt IS NULL")
-Optional<Post> findByIdAndDeletedAtIsNull(@Param("id") Long id);
-```
+- 게시글 및 댓글 조회 시 작성자 정보를 즉시 로딩해 Lazy 로딩 예외 방지
+- 탈퇴한 사용자의 닉네임은 `(알수없음)`으로 일관되게 응답하여 UI 정합성 유지
 
 ### 2. 커서 기반 페이지네이션
 - createdAt 기준 커서 방식 도입으로 무한 스크롤 UX 대응
 - OFFSET 기반 성능 저하 문제 해결
 
 ### 3. 이미지/댓글 Soft Delete 및 최소 UPDATE 처리
-- isDeleted 플래그와 deletedAt 타임스탬프를 적용하여 데이터 복구 가능성 확보
+- `isDeleted` 플래그와 `deletedAt` 타임스탬프를 적용하여 데이터 복구 가능성 확보
 - 불필요한 DELETE & INSERT를 줄이고 필요한 필드만 업데이트
 
 ### 4. 로그아웃 보안 강화
 - Bloom Filter + Redis TTL 조합으로 Access Token 블랙리스트 구현
-- Redis 키 조회 없이도 빠르게 유효성 판단 가능
-
-```java
-bloomClient.add("accessTokenBlacklist", accessToken);
-redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUnit.MILLISECONDS);
-```
+- Redis 키 조회 없이도 빠르게 유효성 판단 및 메모리 효율 확보
 
 ## 주요 설계/개선 고민
-| 문제 | 해결                                          |
-| --- |---------------------------------------------|
-| JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리      |
-| 댓글/이미지의 계층 구조 or 중복 조회 | Stream API + HashMap 계층 매핑 + Soft Delete 처리 |
-| 게시글 수정 시 모든 이미지를 삭제/재등록 | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert      |
-| 탈퇴한 회원의 이메일이 유니크 제약을 방해함 | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보          |
-| Access Token 무효화가 어려움 | Redis Bloom Filter + TTL 기반 블랙리스트로 처리       |
+| 문제                                | 해결                                             |
+|-----------------------------------|------------------------------------------------|
+| JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리         |
+| 댓글/이미지의 계층 구조 or 중복 조회            | Stream API + HashMap 계층 매핑 + Soft Delete 처리    |
+| 게시글 수정 시 이미지 전체 삭제/재등록            | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert         |
+| 탈퇴한 회원의 이메일이 유니크 제약을 방해함          | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보             |
+| Access Token 무효화 처리 어려움           | Redis Bloom Filter + TTL로 블랙리스트 구현             |
+| 탈퇴한 회원의 게시글/댓글 Lazy 로딩 예외 발생 가능   | `@EntityGraph(attributePaths = {"member"})` 적용 |
 
 ## 예외 및 테스트 케이스 설계
 - 커스텀 예외 코드 (ErrorCode) 기반 글로벌 예외 처리
@@ -86,8 +79,8 @@ redisTemplate.opsForValue().set("blacklist:" + accessToken, "true", ttl, TimeUni
 ## 향후 개선 사항
 - 이미지 업로드 → AWS S3 또는 CloudFront CDN 적용
 - 캐싱 전략 → Redis 활용한 조회수/좋아요 수/인기글 캐싱
-- Kafka, Event 기반 비동기 처리 고려 (ex. 조회수, 좋아요 기록)
-- 탈퇴 회원 복구에 대한 UI 개선 및 admin 기능 연동
+- Kafka, Event 기반 비동기 처리 → 조회수/좋아요 기록 로그 처리
+- 관리자 기능 → 탈퇴 회원 복구 UI 및 관리 도구 연동
 
 <details markdown="1">
   <summary>마무리 및 느낀 점</summary>
