@@ -77,12 +77,16 @@ public class AuthService {
 
     /**
      * 로그인
-     * (참고: 위 로그인 메서드는 탈퇴 회원 처리가 되어 있지 않음)
      */
     @Transactional
     public TokenDto login(LoginRequestDto loginRequestDto) {
-        // 1. 이메일 기반 조회
-        List<Member> candidates = memberRepository.findAllByEmailIncludingDeleted(loginRequestDto.getEmail());
+        Member member = getValidMemberByEmail(loginRequestDto.getEmail());
+        validatePassword(loginRequestDto.getPassword(), member.getPassword());
+        return generateAndSaveTokens(member, loginRequestDto.getPassword());
+    }
+
+    private Member getValidMemberByEmail(String email) {
+        List<Member> candidates = memberRepository.findAllByEmailIncludingDeleted(email);
         if (candidates.isEmpty()) {
             throw new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다.");
         }
@@ -90,35 +94,29 @@ public class AuthService {
         Member member = candidates.stream()
                 .filter(m -> !m.getIsDeleted())
                 .findFirst()
-                .orElse(candidates.get(0)); // 삭제된 경우 복구 시도 후 사용
+                .orElse(candidates.get(0));
 
-        // 2. 탈퇴 복구 시도
         if (member.getIsDeleted()) {
-            try {
-                memberService.restoreIfPossible(member.getEmail());
-            } catch (CustomException e) {
-                throw e; // GlobalExceptionHandler에서 처리되도록 던짐
-            }
-
-            member = memberRepository.findByEmail(member.getEmail())
+            memberService.restoreIfPossible(email);
+            return memberRepository.findByEmail(email)
                     .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "복구된 회원을 찾을 수 없습니다."));
         }
 
-        // 3. 비밀번호 검증
-        if (!passwordEncoder.matches(loginRequestDto.getPassword(), member.getPassword())) {
+        return member;
+    }
+
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS, "비밀번호가 일치하지 않습니다.");
         }
+    }
 
-        // 4. 인증 토큰 생성 및 인증 처리
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(member.getEmail(), loginRequestDto.getPassword());
+    private TokenDto generateAndSaveTokens(Member member, String rawPassword) {
+        Authentication authentication = authenticationManagerBuilder.getObject()
+                .authenticate(new UsernamePasswordAuthenticationToken(member.getEmail(), rawPassword));
 
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-
-        // 5. 토큰 발급
         TokenDto tokenDto = tokenProvider.generateTokenDto(authentication, member.getId());
 
-        // 6. RefreshToken 저장
         RefreshToken refreshToken = RefreshToken.builder()
                 .key(member.getId().toString())
                 .value(tokenDto.getRefreshToken())
