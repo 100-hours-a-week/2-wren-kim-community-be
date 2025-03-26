@@ -156,7 +156,6 @@ public class MemberService {
         restorable.updateNickname(originalNickname);
     }
 
-
     private String extractOriginalEmail(String deletedEmail) {
         if (!deletedEmail.startsWith("deleted_")) return deletedEmail;
         int prefixLength = "deleted_".length();
