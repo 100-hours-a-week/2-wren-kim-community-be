@@ -18,10 +18,15 @@ public class PostListResponseDto {
     private final LocalDateTime createdAt;
 
     public static PostListResponseDto from(Post post, int likeCount) {
+        String nickname = "(알수없음)";
+        if (post.getMember() != null && !post.getMember().getIsDeleted()) {
+            nickname = post.getMember().getNickname();
+        }
+
         return PostListResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
-                .memberNickname(post.getMember().getNickname() != null ? post.getMember().getNickname() : "(알수없음)")
+                .memberNickname(nickname)
                 .likeCount(likeCount)
                 .commentCount(post.getCommentCount())
                 .viewCount(post.getViewCount())

@@ -30,8 +30,13 @@ public class PostDetailResponseDto {
     private List<CommentResponseDto> comments;
 
     public static PostDetailResponseDto from(Post post, int likeCount, List<PostImage> images, List<CommentResponseDto> comments) {
-        String nickname = post.getMember() != null ? post.getMember().getNickname() : "(알수없음)";
-        String profileImageUrl = post.getMember() != null ? post.getMember().getProfileImageUrl() : null;
+        String nickname = "(알수없음)";
+        String profileImageUrl = null;
+
+        if (post.getMember() != null && !post.getMember().getIsDeleted()) {
+            nickname = post.getMember().getNickname();
+            profileImageUrl = post.getMember().getProfileImageUrl();
+        }
 
         return PostDetailResponseDto.builder()
                 .id(post.getId())
@@ -42,8 +47,8 @@ public class PostDetailResponseDto {
                 .viewCount(post.getViewCount())
                 .likeCount(likeCount)
                 .commentCount(post.getCommentCount())
-                .memberNickname(post.getMember().getNickname() != null ? post.getMember().getNickname() : "(알수없음)")
-                .memberProfileImageUrl(post.getMember().getProfileImageUrl())
+                .memberNickname(nickname)
+                .memberProfileImageUrl(profileImageUrl)
                 .imageUrls(images.stream().map(PostImage::getImageUrl).collect(Collectors.toList()))
                 .comments(comments)
                 .build();
