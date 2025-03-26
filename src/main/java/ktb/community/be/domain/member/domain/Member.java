@@ -94,7 +94,8 @@ public class Member extends BaseTimeEntity {
         }
 
         if (!this.nickname.startsWith("deleted_")) {
-            this.nickname = "deleted_" + this.nickname;
+            String randomSuffix = UUID.randomUUID().toString().substring(0, 6);
+            this.nickname = String.format("deleted_%s_%s", this.nickname, randomSuffix);
         }
     }
 

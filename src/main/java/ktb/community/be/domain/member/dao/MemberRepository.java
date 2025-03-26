@@ -22,11 +22,15 @@ public interface MemberRepository extends JpaRepository<Member,Long> {
     /**
      * 회원 탈퇴
      */
-    @Query("SELECT m FROM Member m WHERE m.email = :email")
-    Optional<Member> findByEmailIncludingDeleted(@Param("email") String email);
+    @Query("SELECT m FROM Member m WHERE m.email = :email OR m.email LIKE CONCAT('deleted_', :email, '\\_%') escape '\\'")
+    List<Member> findAllByEmailIncludingDeleted(@Param("email") String email);
 
     /**
      * 30일이 지난 탈퇴 회원 조회
      */
-    List<Member> findAllByIsDeletedTrueAndDeletedAtBefore(LocalDateTime dateTime);
+    @Query("SELECT m FROM Member m " +
+            "WHERE m.isDeleted = true " +
+            "AND m.deletedAt < :threshold " +
+            "AND m.email NOT LIKE 'deleted\\_%\\_%' escape '\\'")
+    List<Member> findExpiredAndNotAlreadyMarked(@Param("threshold") LocalDateTime threshold);
 }

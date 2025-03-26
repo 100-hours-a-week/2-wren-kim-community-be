@@ -114,50 +114,68 @@ public class MemberService {
      * 로그인 시 탈퇴한 회원인지 확인하고,
      * 탈퇴 후 30일 이내면 복구 처리 진행
      */
+    @Transactional
     public void restoreIfPossible(String email) {
-        Member member = memberRepository.findByEmailIncludingDeleted(email)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다."));
+        List<Member> candidates = memberRepository.findAllByEmailIncludingDeleted(email);
 
-        // 삭제되지 않은 계정이면 복구할 필요 없음
-        if (!member.getIsDeleted()) return;
-
-        LocalDateTime deletionTime = member.getDeletedAt();
-
-        // 탈퇴한 지 30일 이내인 경우에만 복구 가능
-        boolean isRestorable = deletionTime != null &&
-                deletionTime.plusDays(30).isAfter(LocalDateTime.now());
-
-        if (!isRestorable) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요.");
+        if (candidates.isEmpty()) {
+            throw new CustomException(ErrorCode.MEMBER_NOT_FOUND, "존재하지 않는 회원입니다.");
         }
 
-        // deleted_ 접두사 제거 후 원래 닉네임과 이메일 추출
-        String originalNickname = member.getNickname();
-        if (originalNickname.startsWith("deleted_")) {
-            originalNickname = originalNickname.replaceFirst("deleted_", "");
+        // 1순위: 삭제 안 된 계정이 있으면 복구 필요 없음
+        for (Member m : candidates) {
+            if (!m.getIsDeleted()) return;
         }
 
-        String originalEmail = member.getEmail();
-        if (originalEmail.startsWith("deleted_")) {
-            String[] parts = originalEmail.split("_", 3); // "deleted", "email@example.com", "UUID"
-            if (parts.length >= 3) {
-                originalEmail = parts[1];
-            }
-        }
+        // 복구 가능 후보 찾기 (deletedAt + 30초 이내)
+        Member restorable = candidates.stream()
+                .filter(Member::getIsDeleted)
+                .filter(m -> {
+                    LocalDateTime deletedAt = m.getDeletedAt();
+                    return deletedAt != null && deletedAt.plusDays(30).isAfter(LocalDateTime.now());
+                })
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "계정이 완전히 삭제되었습니다. 새로 가입해주세요."));
 
-        // 이메일/닉네임 중복 여부 체크 (자기 자신 제외)
-        if (memberRepository.existsByEmail(originalEmail) && !originalEmail.equals(member.getEmail())) {
+        // 원래 닉네임/이메일 추출
+        String originalEmail = extractOriginalEmail(restorable.getEmail());
+        String originalNickname = extractOriginalNickname(restorable.getNickname());
+
+        // 중복 체크 (자기 자신 제외)
+        if (memberRepository.existsByEmail(originalEmail) && !originalEmail.equals(restorable.getEmail())) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*복구할 수 없습니다. 이미 사용 중인 이메일입니다.");
         }
 
-        if (memberRepository.existsByNickname(originalNickname) && !originalNickname.equals(member.getNickname())) {
+        if (memberRepository.existsByNickname(originalNickname) && !originalNickname.equals(restorable.getNickname())) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*복구할 수 없습니다. 이미 사용 중인 닉네임입니다.");
         }
 
         // 복구 처리
-        member.restoreAccount();
-        member.updateEmail(originalEmail);
-        member.updateNickname(originalNickname);
+        restorable.restoreAccount();
+        restorable.updateEmail(originalEmail);
+        restorable.updateNickname(originalNickname);
+    }
+
+
+    private String extractOriginalEmail(String deletedEmail) {
+        if (!deletedEmail.startsWith("deleted_")) return deletedEmail;
+        int prefixLength = "deleted_".length();
+        int lastUnderscore = deletedEmail.lastIndexOf('_');
+        if (lastUnderscore > prefixLength) {
+            return deletedEmail.substring(prefixLength, lastUnderscore);
+        }
+        return deletedEmail;
+    }
+
+    private String extractOriginalNickname(String deletedNickname) {
+        if (!deletedNickname.startsWith("deleted_")) return deletedNickname;
+
+        String withoutPrefix = deletedNickname.substring("deleted_".length());
+        int lastUnderscore = withoutPrefix.lastIndexOf('_');
+        if (lastUnderscore > 0) {
+            return withoutPrefix.substring(0, lastUnderscore);
+        }
+        return withoutPrefix;
     }
 
     /**
@@ -166,7 +184,7 @@ public class MemberService {
     @Transactional(readOnly = false)
     public void processExpiredDeletedAccounts() {
         LocalDateTime thresholdDate = LocalDateTime.now().minusDays(30);
-        List<Member> expiredMembers = memberRepository.findAllByIsDeletedTrueAndDeletedAtBefore(thresholdDate);
+        List<Member> expiredMembers = memberRepository.findExpiredAndNotAlreadyMarked(thresholdDate);
 
         System.out.println("만료된 회원 수: " + expiredMembers.size());
 
