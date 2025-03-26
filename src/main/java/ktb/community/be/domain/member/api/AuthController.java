@@ -1,15 +1,19 @@
 package ktb.community.be.domain.member.api;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import ktb.community.be.domain.member.application.AuthService;
 import ktb.community.be.domain.member.dto.LoginRequestDto;
 import ktb.community.be.domain.member.dto.MemberRequestDto;
 import ktb.community.be.domain.member.dto.MemberResponseDto;
+import ktb.community.be.global.exception.CustomException;
+import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.response.ApiResponse;
 import ktb.community.be.global.security.TokenDto;
 import ktb.community.be.global.security.TokenRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,13 +27,14 @@ public class AuthController {
     @Operation(summary = "회원가입", description = "이메일, 비밀번호, 닉네임, 프로필 이미지를 입력하여 회원가입을 진행합니다.")
     @PostMapping(value = "/signup", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<MemberResponseDto>> signup(
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
-            @RequestParam("confirmPassword") String confirmPassword,
-            @RequestParam("nickname") String nickname,
-            @RequestPart("profileImage") MultipartFile profileImage) {
+            @Valid @ModelAttribute MemberRequestDto memberRequestDto,
+            BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors().get(0).getDefaultMessage();
+            throw new CustomException(ErrorCode.INVALID_REQUEST, errorMessage);
+        }
 
-        MemberRequestDto memberRequestDto = new MemberRequestDto(email, password, confirmPassword, nickname, profileImage);
         MemberResponseDto responseDto = authService.signup(memberRequestDto);
         return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다.", responseDto));
     }
