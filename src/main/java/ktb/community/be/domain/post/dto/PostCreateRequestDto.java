@@ -4,6 +4,8 @@ import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.member.domain.Member;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,8 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PostCreateRequestDto {
 
     @NotBlank(message = "제목을 입력해주세요.")
