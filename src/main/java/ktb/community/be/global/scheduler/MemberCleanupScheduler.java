@@ -16,7 +16,11 @@ public class MemberCleanupScheduler {
     @Scheduled(cron = "0 0 3 * * ?") // 매일 새벽 3시 실행
     public void cleanupDeletedMembers() {
         log.info("* 30일 지난 탈퇴 회원 이메일/닉네임 변경 작업 시작");
-        memberService.processExpiredDeletedAccounts();
-        log.info("* 30일 지난 탈퇴 회원 처리 완료");
+        try {
+            memberService.processExpiredDeletedAccounts();
+            log.info("* 30일 지난 탈퇴 회원 처리 완료");
+        } catch (Exception e) {
+            log.error("* 30일 지난 탈퇴 회원 처리 중 예외 발생: {}", e.getMessage(), e);
+        }
     }
 }
