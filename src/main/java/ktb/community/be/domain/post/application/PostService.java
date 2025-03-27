@@ -38,7 +38,6 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final MemberRepository memberRepository;
     private final FileStorageService fileStorageService;
-//    private final ViewCountService viewCountService;
 
     /**
      * 게시글 작성
