@@ -2,10 +2,12 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'ktb.community'
 version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '21'
 
 java {
 	toolchain {
@@ -43,6 +45,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mockito:mockito-inline:5.2.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
@@ -73,6 +76,46 @@ dependencyManagement {
 	}
 }
 
+jacoco {
+	toolVersion = "0.8.10" // 최신 버전 확인 가능
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+test {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+
+	afterEvaluate {
+		classDirectories.setFrom(
+				files(classDirectories.files.collect {
+					fileTree(dir: it, exclude: [
+							"**/dto/**",
+							"**/config/**",
+							"**/exception/**",
+							"**/global/response/**",
+							"**/global/util/**",
+							"**/BaseTimeEntity.class",
+							"**/domain/Authority.class"
+					])
+				})
+		)
+
+		// test + 통합테스트 실행 시 생성된 것들까지
+		executionData.setFrom(fileTree(buildDir).include(
+				"jacoco/test.exec",
+				"jacoco/*.exec"
+		))
+	}
 }
