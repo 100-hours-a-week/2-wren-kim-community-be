@@ -15,13 +15,12 @@ public class CommentHierarchyBuilder {
         Map<Long, CommentResponseDto> commentMap = new HashMap<>();
         List<CommentResponseDto> topLevelComments = new ArrayList<>();
 
-        // 모든 댓글을 Map에 저장 (삭제된 댓글 포함)
+        // 모든 댓글을 DTO로 변환
         for (PostComment comment : comments) {
             CommentResponseDto commentDto = CommentResponseDto.from(comment);
             commentMap.put(comment.getId(), commentDto);
         }
 
-        // 부모-자식 관계 매핑
         for (PostComment comment : comments) {
             Long parentId = Optional.ofNullable(comment.getParentComment())
                     .map(PostComment::getId)
@@ -30,19 +29,31 @@ public class CommentHierarchyBuilder {
             CommentResponseDto currentComment = commentMap.get(comment.getId());
 
             if (parentId == null) {
+                // 원댓글
                 topLevelComments.add(currentComment);
             } else {
-                // 부모 댓글이 삭제되었더라도 계층 유지
-                CommentResponseDto parentComment = commentMap.get(parentId);
-                if (parentComment != null) {
-                    parentComment.getReplies().add(currentComment);
+                // 대댓글의 parent가 대댓글이면 최상위 댓글까지 올라감
+                PostComment topParent = getTopLevelParent(comment);
+                CommentResponseDto topParentDto = commentMap.get(topParent.getId());
+
+                if (topParentDto != null) {
+                    topParentDto.getReplies().add(currentComment);
                 }
             }
         }
 
-        // 최상위 댓글을 정렬
+        // 정렬 (원댓글만 정렬)
         topLevelComments.sort(Comparator.comparing(CommentResponseDto::getCreatedAt));
+        topLevelComments.forEach(c -> c.getReplies().sort(Comparator.comparing(CommentResponseDto::getCreatedAt)));
 
         return topLevelComments;
+    }
+
+    private static PostComment getTopLevelParent(PostComment comment) {
+        PostComment current = comment;
+        while (current.getParentComment() != null && current.getParentComment().getParentComment() != null) {
+            current = current.getParentComment();
+        }
+        return current.getParentComment() == null ? current : current.getParentComment();
     }
 }
