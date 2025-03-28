@@ -2,6 +2,7 @@ package ktb.community.be.domain.post.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.image.domain.PostImage;
 import ktb.community.be.domain.like.domain.PostLike;
 import ktb.community.be.domain.member.domain.Member;
 import ktb.community.be.global.domain.BaseTimeEntity;

@@ -1,6 +1,6 @@
-package ktb.community.be.domain.post.dao;
+package ktb.community.be.domain.image.dao;
 
-import ktb.community.be.domain.post.domain.PostImage;
+import ktb.community.be.domain.image.domain.PostImage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

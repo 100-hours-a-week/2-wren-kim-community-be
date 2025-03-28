@@ -3,7 +3,7 @@ package ktb.community.be.domain.post.dto;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.post.domain.PostImage;
+import ktb.community.be.domain.image.domain.PostImage;
 import lombok.Builder;
 import lombok.Getter;
 

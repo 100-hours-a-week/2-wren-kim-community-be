@@ -1,7 +1,7 @@
 package ktb.community.be.domain.post.dto;
 
 import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.post.domain.PostImage;
+import ktb.community.be.domain.image.domain.PostImage;
 import lombok.Builder;
 import lombok.Getter;
 
