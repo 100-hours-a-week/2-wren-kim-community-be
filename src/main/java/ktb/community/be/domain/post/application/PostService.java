@@ -79,7 +79,6 @@ public class PostService {
      */
     @Transactional
     public PostDetailResponseDto updatePost(Long postId, Long memberId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 

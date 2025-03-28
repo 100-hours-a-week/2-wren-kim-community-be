@@ -32,7 +32,9 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
     @Query("SELECT COUNT(c) FROM PostComment c WHERE c.post.id = :postId AND c.deletedAt IS NULL")
     int countByPostId(@Param("postId") Long postId);
 
-    // Soft Delete 포함하여 특정 댓글 조회
+    /**
+     * Soft Delete 포함하여 특정 댓글 조회
+     */
     @Query("SELECT c FROM PostComment c LEFT JOIN FETCH c.parentComment WHERE c.id = :commentId")
     Optional<PostComment> findByIdIncludingDeleted(@Param("commentId") Long commentId);
 }

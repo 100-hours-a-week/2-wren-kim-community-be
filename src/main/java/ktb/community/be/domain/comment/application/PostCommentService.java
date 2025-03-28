@@ -30,7 +30,6 @@ public class PostCommentService {
      */
     @Transactional
     public CommentResponseDto createComment(Long postId, Long memberId, CommentRequestDto requestDto) {
-
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)

@@ -13,6 +13,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class PostUpdateRequestDto {
+
     private String title;
     private String content;
     private List<Long> keepImageIds; // 유지할 이미지 ID 리스트

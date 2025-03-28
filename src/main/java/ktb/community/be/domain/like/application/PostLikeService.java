@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class PostLikeService {
+
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
     private final MemberRepository memberRepository;
@@ -26,7 +27,6 @@ public class PostLikeService {
      */
     @Transactional
     public boolean toggleLike(Long postId, Long memberId) {
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 

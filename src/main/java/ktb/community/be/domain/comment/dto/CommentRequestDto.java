@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class CommentRequestDto {
+
     private Long memberId;
 
     @NotNull(message = "내용을 입력해주세요.")
