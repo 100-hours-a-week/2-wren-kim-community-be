@@ -44,13 +44,13 @@ public class PostService {
      */
     @Transactional
     public PostCreateResponseDto createPost(Long memberId, PostCreateRequestDto requestDto,
-                                            List<MultipartFile> images, List<Integer> orderIndexes) {
+                                            List<MultipartFile> images, String orderIndexesJson) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Post post = postRepository.save(requestDto.toEntity(member));
 
-        // 사용자 지정 순서 반영
+        List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
         List<PostImage> postImages = fileStorageService.storePostImages(images, orderIndexes, post, member);
         postImageRepository.saveAll(postImages);
 
