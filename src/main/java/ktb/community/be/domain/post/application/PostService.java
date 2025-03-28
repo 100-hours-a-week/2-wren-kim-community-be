@@ -150,7 +150,7 @@ public class PostService {
             if (orderIndexesJson == null || images == null || images.isEmpty()) return List.of();
             List<Integer> orderIndexes = new ObjectMapper().readValue(orderIndexesJson, List.class);
             if (orderIndexes.size() != images.size()) {
-                throw new CustomException(ErrorCode.INVALID_REQUEST, "이미지 개수와 orderIndex 개수가 맞지 않습니다.");
+                throw new CustomException(ErrorCode.IMAGE_ORDER_INDEX_MISMATCH);
             }
             return orderIndexes;
         } catch (JsonProcessingException e) {
