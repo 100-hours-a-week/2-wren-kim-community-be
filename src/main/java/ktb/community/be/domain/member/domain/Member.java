@@ -76,8 +76,8 @@ public class Member extends BaseTimeEntity {
 
     @PrePersist
     public void prePersist() {
-        this.isActive = (this.isActive == null) ? true : this.isActive;
-        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.isActive = this.isActive == null || this.isActive;
+        this.isDeleted = this.isDeleted != null && this.isDeleted;
     }
 
     public void softDelete() {

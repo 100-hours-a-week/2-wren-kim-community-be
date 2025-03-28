@@ -43,7 +43,7 @@ public class PostLike extends BaseTimeEntity {
 
     @PrePersist
     public void prePersist() {
-        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.isDeleted = this.isDeleted != null && this.isDeleted;
     }
 
     // 사용자가 직접 좋아요 취소

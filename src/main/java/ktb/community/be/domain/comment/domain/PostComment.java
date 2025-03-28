@@ -53,8 +53,8 @@ public class PostComment extends BaseTimeEntity {
 
     @PrePersist
     public void prePersist() {
-        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
-        this.replies = (this.replies == null) ? new ArrayList<>() : this.replies;
+        this.isDeleted = this.isDeleted != null && this.isDeleted;
+        this.replies = this.replies == null ? new ArrayList<>() : this.replies;
     }
 
     public void updateContent(String content) {

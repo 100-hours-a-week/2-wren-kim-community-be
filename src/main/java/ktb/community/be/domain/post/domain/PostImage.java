@@ -42,7 +42,7 @@ public class PostImage extends BaseTimeEntity {
 
     @PrePersist
     public void prePersist() {
-        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.isDeleted = this.isDeleted != null && this.isDeleted;
     }
 
     public void softDelete() {

@@ -74,7 +74,7 @@ public class Post extends BaseTimeEntity {
     public void prePersist() {
         this.viewCount = (this.viewCount == null) ? 0 : this.viewCount;
         this.commentCount = (this.commentCount == null) ? 0 : this.commentCount;
-        this.isDeleted = (this.isDeleted == null) ? false : this.isDeleted;
+        this.isDeleted = this.isDeleted != null && this.isDeleted;
     }
 
     public void increaseViewCount() {
