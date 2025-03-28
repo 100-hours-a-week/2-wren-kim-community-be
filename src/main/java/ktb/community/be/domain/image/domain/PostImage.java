@@ -1,7 +1,8 @@
-package ktb.community.be.domain.post.domain;
+package ktb.community.be.domain.image.domain;
 
 import jakarta.persistence.*;
 import ktb.community.be.domain.member.domain.Member;
+import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import lombok.*;
 
