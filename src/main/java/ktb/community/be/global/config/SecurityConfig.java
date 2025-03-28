@@ -61,6 +61,9 @@ public class SecurityConfig {
                 // 인증 및 접근 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/uploads/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
