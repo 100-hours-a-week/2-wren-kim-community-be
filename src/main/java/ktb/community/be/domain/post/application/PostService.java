@@ -1,18 +1,18 @@
 package ktb.community.be.domain.post.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ktb.community.be.domain.comment.dao.PostCommentRepository;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.image.application.PostImageService;
+import ktb.community.be.domain.image.dao.PostImageRepository;
+import ktb.community.be.domain.image.domain.PostImage;
 import ktb.community.be.domain.like.dao.PostLikeRepository;
 import ktb.community.be.domain.like.domain.PostLike;
-import ktb.community.be.domain.post.dao.PostImageRepository;
-import ktb.community.be.domain.post.dao.PostRepository;
-import ktb.community.be.domain.post.domain.Post;
-import ktb.community.be.domain.post.domain.PostImage;
-import ktb.community.be.domain.post.dto.*;
 import ktb.community.be.domain.member.dao.MemberRepository;
 import ktb.community.be.domain.member.domain.Member;
+import ktb.community.be.domain.post.dao.PostRepository;
+import ktb.community.be.domain.post.domain.Post;
+import ktb.community.be.domain.post.dto.*;
+import ktb.community.be.global.domain.BaseTimeEntity;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
 import ktb.community.be.global.util.CommentHierarchyBuilder;
@@ -25,8 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -37,34 +37,75 @@ public class PostService {
     private final PostLikeRepository postLikeRepository;
     private final PostImageRepository postImageRepository;
     private final MemberRepository memberRepository;
+    private final PostImageService postImageService;
     private final FileStorageService fileStorageService;
 
     /**
-     * 게시글 작성
+     * 게시글에 대한 이미지 업로드 처리
+     */
+    @Transactional
+    public void uploadImages(Long postId, Long memberId,
+                             List<MultipartFile> images, List<Integer> orderIndexes) {
+        Post post = findPostByIdAndValidateOwner(postId, memberId);
+        List<PostImage> postImages = buildPostImages(images, orderIndexes, post, post.getMember());
+        postImageRepository.saveAll(postImages);
+    }
+
+    /**
+     * 게시글 생성 및 이미지 저장
      */
     @Transactional
     public PostCreateResponseDto createPost(Long memberId, PostCreateRequestDto requestDto,
-                                            List<MultipartFile> images, String orderIndexesJson) {
+                                            List<MultipartFile> images, List<Integer> orderIndexes) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         Post post = postRepository.save(requestDto.toEntity(member));
 
-        List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, images);
-        List<PostImage> postImages = fileStorageService.storePostImages(images, orderIndexes, post, member);
-        postImageRepository.saveAll(postImages);
+        List<PostImage> postImages = List.of();
+        if (images != null && !images.isEmpty()) {
+            postImages = buildPostImages(images, orderIndexes, post, member);
+            postImageRepository.saveAll(postImages);
+        }
 
         return PostCreateResponseDto.from(post, postImages);
     }
 
     /**
-     * 게시글 상세 조회
+     * 게시글 수정 및 이미지 변경 처리
+     */
+    @Transactional
+    public PostDetailResponseDto updatePost(Long postId, Long memberId, PostUpdateWithImageRequestDto updateDto) {
+        Post post = findPostByIdAndValidateOwner(postId, memberId);
+        PostUpdateRequestDto data = updateDto.getPostData();
+
+        postImageService.deleteImages(post, data.getKeepImageIds());
+        if (data.hasOrderIndexUpdate()) {
+            postImageService.updateOrderIndexes(post, data.getOrderIndexMap());
+        }
+
+        if (updateDto.getNewImages() != null && !updateDto.getNewImages().isEmpty()) {
+            List<PostImage> newPostImages = postImageService.saveNewImages(post, post.getMember(), updateDto.getNewImages(), updateDto.getOrderIndexes());
+            // 저장은 서비스 내부에서 진행됨
+        }
+
+        post.update(data.getTitle(), data.getContent());
+
+        return PostDetailResponseDto.from(
+                post,
+                postLikeRepository.countByPostId(postId),
+                postImageRepository.findAllByPostId(postId),
+                List.of()
+        );
+    }
+
+    /**
+     * 게시글 상세 조회 (조회수 증가 포함)
      */
     @Transactional
     public PostDetailResponseDto getPostDetail(Long postId) {
         Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
-
         post.increaseViewCount();
 
         List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
@@ -75,140 +116,75 @@ public class PostService {
     }
 
     /**
-     * 게시글 수정
-     */
-    @Transactional
-    public PostDetailResponseDto updatePost(Long postId, Long memberId, String requestData, List<MultipartFile> newImages, String orderIndexesJson) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
-
-        if (!post.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED, "해당 게시글에 대한 수정 권한이 없습니다.");
-        }
-
-        // JSON 데이터를 객체로 변환
-        PostUpdateRequestDto updateRequest = parseUpdateRequestData(requestData);
-
-        // 기존 이미지 조회
-        List<PostImage> existingImages = postImageRepository.findAllByPostId(postId);
-        Map<Long, PostImage> existingImageMap = existingImages.stream()
-                .collect(Collectors.toMap(PostImage::getId, image -> image));
-
-        // 유지할 이미지 ID 리스트
-        List<Long> keepImageIds = updateRequest.getKeepImageIds();
-
-        // Soft Delete할 이미지 리스트 추출
-        List<PostImage> imagesToDelete = existingImages.stream()
-                .filter(image -> keepImageIds == null || !keepImageIds.contains(image.getId()))
-                .toList();
-
-        // Soft Delete 적용 (한 번에 batch update 처리)
-        if (!imagesToDelete.isEmpty()) {
-            for (PostImage image : imagesToDelete) {
-                image.softDelete();
-            }
-            postImageRepository.saveAll(imagesToDelete);
-        }
-
-        // 기존 이미지의 orderIndex 업데이트 최적화
-        if (updateRequest.hasOrderIndexUpdate()) {
-            Map<Long, Integer> orderIndexMap = updateRequest.getOrderIndexMap();
-            for (Map.Entry<Long, Integer> entry : orderIndexMap.entrySet()) {
-                PostImage image = existingImageMap.get(entry.getKey());
-                if (image != null && !image.getOrderIndex().equals(entry.getValue())) {
-                    image.updateOrderIndex(entry.getValue());
-                }
-            }
-        }
-
-        // 변경 사항 있는 기존 이미지만 업데이트
-        postImageRepository.saveAll(existingImages);
-
-        // 새 이미지 추가 (불필요한 INSERT 방지)
-        if (newImages != null && !newImages.isEmpty()) {
-            List<Integer> orderIndexes = parseOrderIndexes(orderIndexesJson, newImages);
-            List<PostImage> newPostImages = fileStorageService.storePostImages(newImages, orderIndexes, post, post.getMember());
-            postImageRepository.saveAll(newPostImages);
-        }
-
-        // 제목과 내용 업데이트
-        post.update(updateRequest.getTitle(), updateRequest.getContent());
-
-        return PostDetailResponseDto.from(post, postLikeRepository.countByPostId(postId), postImageRepository.findAllByPostId(postId), List.of());
-    }
-
-    private PostUpdateRequestDto parseUpdateRequestData(String requestData) {
-        try {
-            return new ObjectMapper().readValue(requestData, PostUpdateRequestDto.class);
-        } catch (JsonProcessingException e) {
-            throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
-        }
-    }
-
-    private List<Integer> parseOrderIndexes(String orderIndexesJson, List<MultipartFile> images) {
-        try {
-            if (orderIndexesJson == null || images == null || images.isEmpty()) return List.of();
-            List<Integer> orderIndexes = new ObjectMapper().readValue(orderIndexesJson, List.class);
-            if (orderIndexes.size() != images.size()) {
-                throw new CustomException(ErrorCode.IMAGE_ORDER_INDEX_MISMATCH);
-            }
-            return orderIndexes;
-        } catch (JsonProcessingException e) {
-            throw new CustomException(ErrorCode.INVALID_JSON_FORMAT, "JSON 파싱 오류: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 게시글 삭제
+     * 게시글 삭제 (댓글, 이미지, 좋아요도 함께 soft delete)
      */
     @Transactional
     public void deletePost(Long postId, Long memberId) {
-        // 삭제할 게시글 조회 (Soft Delete 적용되지 않은 게시글만)
-        Post post = postRepository.findByIdAndDeletedAtIsNull(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        Post post = findPostByIdAndValidateOwner(postId, memberId);
 
-        if (!post.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED, "해당 게시글에 대한 삭제 권한이 없습니다.");
-        }
+        softDeleteAll(postCommentRepository.findAllByPostId(postId));
+        softDeleteAll(postImageRepository.findAllByPostId(postId));
+        softDeleteAll(postLikeRepository.findAllByPostId(postId));
 
-        // 연관된 데이터 조회
-        List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
-        List<PostImage> images = postImageRepository.findAllByPostId(postId);
-        List<PostLike> likes = postLikeRepository.findAllByPostId(postId);
-
-        // 댓글 Soft Delete
-        for (PostComment comment : comments) {
-            comment.softDelete();
-        }
-        postCommentRepository.saveAll(comments); // Batch Update
-
-        // 이미지 Soft Delete
-        for (PostImage image : images) {
-            image.softDelete();
-        }
-        postImageRepository.saveAll(images); // Batch Update
-
-        // 좋아요 Soft Delete (있을 때만 처리)
-        for (PostLike like : likes) {
-            like.softDeleteByPostDeletion();
-        }
-        postLikeRepository.saveAll(likes); // Batch Update
-
-        // 게시글 Soft Delete
         post.softDelete();
-        postRepository.save(post); // 변경 감지 적용
+        postRepository.save(post);
     }
 
     /**
-     * 게시글 전체 조회 (커서 기반 페이지네이션)
+     * 전체 게시글 조회 (커서 기반 페이지네이션)
      */
     @Transactional(readOnly = true)
     public List<PostListResponseDto> getAllPosts(LocalDateTime cursor, Pageable pageable) {
-        List<Post> posts = postRepository.findByCursor(cursor, pageable);
+        return postRepository.findByCursor(cursor, pageable).stream()
+                .map(post -> PostListResponseDto.from(post, postLikeRepository.countByPostId(post.getId())))
+                .collect(Collectors.toList());
+    }
 
-        return posts.stream().map(post -> {
-            int likeCount = postLikeRepository.countByPostId(post.getId());
-            return PostListResponseDto.from(post, likeCount);
-        }).collect(Collectors.toList());
+    /**
+     * 게시글 ID와 회원 ID로 게시글 조회 및 작성자 검증
+     */
+    private Post findPostByIdAndValidateOwner(Long postId, Long memberId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+        return post;
+    }
+
+    /**
+     * 게시글 이미지 목록 생성 (파일 저장 포함)
+     */
+    private List<PostImage> buildPostImages(List<MultipartFile> images, List<Integer> orderIndexes,
+                                            Post post, Member member) {
+        if (images == null || images.isEmpty()) return List.of();
+
+        if (orderIndexes == null || orderIndexes.size() != images.size()) {
+            throw new CustomException(ErrorCode.IMAGE_ORDER_INDEX_MISMATCH);
+        }
+
+        return IntStream.range(0, images.size())
+                .mapToObj(i -> {
+                    String imageUrl = fileStorageService.storeFile(images.get(i), "posts");
+                    return PostImage.builder()
+                            .post(post)
+                            .member(member)
+                            .imageUrl(imageUrl)
+                            .orderIndex(orderIndexes.get(i))
+                            .isDeleted(false)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 댓글, 이미지, 좋아요 등 다양한 엔티티 일괄 soft delete
+     */
+    private <T extends BaseTimeEntity> void softDeleteAll(List<T> entities) {
+        entities.forEach(entity -> {
+            if (entity instanceof PostImage image) image.softDelete();
+            else if (entity instanceof PostComment comment) comment.softDelete();
+            else if (entity instanceof PostLike like) like.softDeleteByPostDeletion();
+        });
     }
 }
