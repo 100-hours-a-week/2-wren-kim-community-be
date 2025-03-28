@@ -46,7 +46,7 @@ public class MemberService {
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
 
         if (nickname != null && !nickname.trim().isEmpty()) {
-            validateNickname(nickname);
+            validateNickname(nickname, member);
             member.updateNickname(nickname);
         } else {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
@@ -60,7 +60,7 @@ public class MemberService {
         return MemberResponseDto.of(member);
     }
 
-    private void validateNickname(String nickname) {
+    private void validateNickname(String nickname, Member currentMember) {
         if (nickname.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
         }
@@ -69,7 +69,9 @@ public class MemberService {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임은 최대 10자까지 작성 가능합니다.");
         }
 
-        if (memberRepository.existsByNickname(nickname)) {
+        // 현재 사용자의 닉네임이 아닌 경우만 중복 검사
+        if (!nickname.equals(currentMember.getNickname()) &&
+                memberRepository.existsByNickname(nickname)) {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "*중복된 닉네임입니다.");
         }
     }
