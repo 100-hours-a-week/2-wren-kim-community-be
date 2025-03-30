@@ -45,16 +45,24 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND, "*사용자를 찾을 수 없습니다."));
 
-        if (nickname != null && !nickname.trim().isEmpty()) {
+        boolean isNicknameProvided = nickname != null && !nickname.trim().isEmpty();
+        boolean isImageProvided = profileImage != null && !profileImage.isEmpty();
+
+        // 닉네임이 전달된 경우에만 업데이트
+        if (isNicknameProvided) {
             validateNickname(nickname, member);
             member.updateNickname(nickname);
-        } else {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "*닉네임을 입력해주세요.");
         }
 
-        if (profileImage != null && !profileImage.isEmpty()) {
+        // 이미지가 전달된 경우에만 업데이트
+        if (isImageProvided) {
             String newProfileImagePath = fileStorageService.storeProfileImage(profileImage);
             member.updateProfileImage(newProfileImagePath);
+        }
+
+        // 둘 다 null 또는 변경사항 없으면 예외 (선택사항)
+        if (!isNicknameProvided && !isImageProvided) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "*변경된 정보가 없습니다.");
         }
 
         return MemberResponseDto.of(member);
