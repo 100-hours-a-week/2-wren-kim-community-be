@@ -59,6 +59,10 @@ public class PostCommentService {
         PostComment parentComment = postCommentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "부모 댓글을 찾을 수 없습니다."));
 
+        if (parentComment.getIsDeleted()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "삭제된 댓글에는 답글을 달 수 없습니다.");
+        }
+
         PostComment reply = PostComment.builder()
                 .post(post)
                 .member(member)
@@ -80,6 +84,10 @@ public class PostCommentService {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
 
+        if (comment.getIsDeleted()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "삭제된 댓글은 수정할 수 없습니다.");
+        }
+
         if (!comment.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.ACCESS_DENIED, "댓글 수정 권한이 없습니다.");
         }
@@ -96,6 +104,10 @@ public class PostCommentService {
     public void deleteComment(Long commentId, Long memberId) {
         PostComment comment = postCommentRepository.findByIdIncludingDeleted(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST, "댓글을 찾을 수 없습니다."));
+
+        if (comment.getIsDeleted()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST, "이미 삭제된 댓글입니다.");
+        }
 
         if (!comment.getMember().getId().equals(memberId)) {
             throw new CustomException(ErrorCode.ACCESS_DENIED, "댓글 삭제 권한이 없습니다.");
