@@ -2,18 +2,24 @@ package ktb.community.be.domain.post.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import ktb.community.be.domain.comment.dto.CommentResponseDto;
+import ktb.community.be.domain.image.dto.PostImageDto;
 import ktb.community.be.domain.post.domain.Post;
 import ktb.community.be.domain.image.domain.PostImage;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@JsonPropertyOrder({"id", "title", "content", "createdAt", "updatedAt", "viewCount", "likeCount", "commentCount", "memberNickname", "memberProfileImageUrl", "imageUrls", "comments"})
 @Getter
 @Builder
+@JsonPropertyOrder({
+        "id", "title", "content", "images",
+        "createdAt", "updatedAt", "viewCount", "likeCount", "commentCount",
+        "memberNickname", "memberProfileImageUrl", "comments"
+})
 public class PostDetailResponseDto {
 
     private Long id;
@@ -26,7 +32,9 @@ public class PostDetailResponseDto {
     private int commentCount;
     private String memberNickname;
     private String memberProfileImageUrl;
-    private List<String> imageUrls;
+
+    private List<PostImageDto> images;
+
     private List<CommentResponseDto> comments;
 
     public static PostDetailResponseDto from(Post post, int likeCount, List<PostImage> images, List<CommentResponseDto> comments) {
@@ -49,7 +57,10 @@ public class PostDetailResponseDto {
                 .commentCount(post.getCommentCount())
                 .memberNickname(nickname)
                 .memberProfileImageUrl(profileImageUrl)
-                .imageUrls(images.stream().map(PostImage::getImageUrl).collect(Collectors.toList()))
+                .images(images.stream()
+                        .sorted(Comparator.comparingInt(PostImage::getOrderIndex))
+                        .map(PostImageDto::from)
+                        .collect(Collectors.toList()))
                 .comments(comments)
                 .build();
     }
