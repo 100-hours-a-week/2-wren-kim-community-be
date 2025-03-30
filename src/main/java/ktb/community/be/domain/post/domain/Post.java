@@ -71,13 +71,6 @@ public class Post extends BaseTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PostLike> likes = new HashSet<>();
 
-    @PrePersist
-    public void prePersist() {
-        this.viewCount = (this.viewCount == null) ? 0 : this.viewCount;
-        this.commentCount = (this.commentCount == null) ? 0 : this.commentCount;
-        this.isDeleted = this.isDeleted != null && this.isDeleted;
-    }
-
     public void increaseViewCount() {
         if (this.viewCount == null) {
             this.viewCount = 0;
