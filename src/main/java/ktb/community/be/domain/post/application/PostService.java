@@ -1,7 +1,9 @@
 package ktb.community.be.domain.post.application;
 
+import ktb.community.be.domain.comment.application.PostCommentService;
 import ktb.community.be.domain.comment.dao.PostCommentRepository;
 import ktb.community.be.domain.comment.domain.PostComment;
+import ktb.community.be.domain.comment.dto.CommentResponseDto;
 import ktb.community.be.domain.image.application.PostImageService;
 import ktb.community.be.domain.image.dao.PostImageRepository;
 import ktb.community.be.domain.image.domain.PostImage;
@@ -15,7 +17,6 @@ import ktb.community.be.domain.post.dto.*;
 import ktb.community.be.global.domain.BaseTimeEntity;
 import ktb.community.be.global.exception.CustomException;
 import ktb.community.be.global.exception.ErrorCode;
-import ktb.community.be.global.util.CommentHierarchyBuilder;
 import ktb.community.be.global.util.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ public class PostService {
     private final PostImageRepository postImageRepository;
     private final MemberRepository memberRepository;
     private final PostImageService postImageService;
+    private final PostCommentService postCommentService;
     private final FileStorageService fileStorageService;
 
     /**
@@ -108,11 +110,11 @@ public class PostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
         post.increaseViewCount();
 
-        List<PostComment> comments = postCommentRepository.findAllByPostId(postId);
+        List<CommentResponseDto> comments = postCommentService.getCommentsByPostId(postId);
         List<PostImage> images = postImageRepository.findAllByPostId(postId);
         int likeCount = postLikeRepository.countByPostId(postId);
 
-        return PostDetailResponseDto.from(post, likeCount, images, CommentHierarchyBuilder.buildCommentHierarchy(comments));
+        return PostDetailResponseDto.from(post, likeCount, images, comments);
     }
 
     /**
