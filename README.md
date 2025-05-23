@@ -104,7 +104,7 @@ JWT 기반 인증·보안·테스트 구조를 반영한 실전형 커뮤니티 
 }
 ```
 
-- API 설계 방식: RESTful + HTTP 상태 코드 준수 + 명확한 URI 규칙 (`/api/posts`, `/api/comments`, `/api/auth`)
+- API 설계 방식: RESTful + HTTP 상태 코드 준수 + 명확한 URI 규칙 (`/api/posts`, `/api/comments`)
 
 ---
 
