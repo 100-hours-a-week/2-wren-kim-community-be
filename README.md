@@ -29,17 +29,15 @@ JWT 기반 인증·보안·테스트 구조를 반영한 실전형 커뮤니티 
 
 ## 2. 기술 스택 (Tech Stack)
 
-```
-Language: Java 21
-Framework: Spring Boot 3.4.3
-ORM: Hibernate, Spring Data JPA
-Security: Spring Security, JWT
-Infra: Redis (Token Blacklist, Bloom Filter)
-Database: MySQL 8.0.41
-Build: Gradle
-Test: JUnit5, Mockito, JaCoCo
-Cloud (예정): AWS S3, CloudFront (이미지 업로드 및 정적 리소스)
-```
+- **Language**: Java 21
+- **Framework**: Spring Boot 3.4.3
+- **ORM**: Hibernate, Spring Data JPA
+- **Security**: Spring Security, JWT
+- **Infra**: Redis (Token Blacklist, Bloom Filter)
+- **Database**: MySQL 8.0.41
+- **Build**: Gradle
+- **Test**: JUnit5, Mockito, JaCoCo
+- **Cloud (예정)**: AWS S3, CloudFront (이미지 업로드 및 정적 리소스)
 
 ---
 
