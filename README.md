@@ -1,93 +1,156 @@
 # 게시글 커뮤니티 백엔드 서버
 
-> **Spring Boot + JPA 기반의 커뮤니티 API 서버입니다.** <br>
-> 게시글, 댓글, 좋아요, 회원가입 및 인증, 회원 탈퇴 등 전체 흐름을 도메인 주도적으로 설계하고,
-> **JPA 성능 최적화, 트랜잭션 처리, 예외 처리, 인증 흐름 설계** 등을 고민하며 개발했습니다.
+> Spring Boot + JWT 기반의 실전형 커뮤니티 API 서버
+>
+>
+> 회원가입부터 게시글·댓글 CRUD, 이미지 업로드, 인증/보안, 트랜잭션 처리까지 실제 서비스 수준의 흐름을 도메인 중심으로 구현하고, JPA 성능 최적화와 예외 처리, 테스트 커버리지 확보까지 고려한 프로젝트입니다.
+>
 
-## 기술 스택
+---
 
-| 구분 | 기술                                    |
-| --- |---------------------------------------|
-| Language | Java 21                               |
-| Framework | Spring Boot 3.4.3                     |
-| DB | MySQL 8.0.41                          |
-| ORM | Spring Data JPA, Hibernate            |
-| Security | Spring Security, JWT                  |
-| Infra | Redis (Token Blacklist, Bloom Filter) |
-| Build Tool | Gradle                                |
-| Cloud | (현재는 로컬 저장 기반, 향후 AWS S3 고려)          |
+## 1. 프로젝트 개요 (What & Why)
 
-## 기능 요약
-### 회원
-- 회원가입 (유효성 검사, 커스텀 Exception 적용)
-- 로그인 (JWT 기반 인증)
-- 회원 정보 수정 (닉네임, 프로필 이미지)
-- 비밀번호 변경 (복잡도 검사 포함)
-- 회원 탈퇴 (Soft Delete + 30일 후 자동 익명화 + 복구 기능)
+**한 줄 요약**
 
-### 게시글
-- 게시글 작성 (다중 이미지 업로드, 트랜잭션 처리)
-- 게시글 상세 조회 (작성자, 이미지, 댓글, 좋아요 포함 / N+1 문제 해결)
-- 게시글 수정 (Soft Delete + 순서 변경, 변경 감지 활용)
-- 게시글 삭제 (연관 데이터 일괄 Soft Delete + Batch Update)
-- 게시글 전체 조회 (커서 기반 페이지네이션, 탈퇴 회원 닉네임 구분 처리)
+JWT 기반 인증·보안·테스트 구조를 반영한 실전형 커뮤니티 백엔드 프로젝트입니다.
 
-### 댓글 & 좋아요
-- 댓글/대댓글 작성, 수정, 삭제 (계층 구조 유지 + Soft Delete, 탈퇴 회원 닉네임 구분 처리)
-- 좋아요 추가/취소 (토글 방식, Soft Delete 적용)
-- 좋아요 개수 조회 API 분리 → 성능 최적화
+**배경과 목적**
 
-### 인증 및 로그아웃
-- Spring Security + JWT
-- Refresh Token 관리
-- Access Token 블랙리스트 (Redis + Bloom Filter + TTL)
+단순 CRUD를 넘어서 사용자 인증, 이미지 처리, 댓글 계층 구조, 소프트 삭제, 토큰 블랙리스트 등 실제 서비스에서 발생하는 요구사항을 반영한 게시판 시스템을 직접 설계했습니다.
 
-## 성능 최적화 핵심 포인트
-### 1. JPA N+1 문제 해결
-- `@EntityGraph` + `@BatchSize` + `@Formula`를 조합하여, 한 쿼리로 작성자, 댓글, 좋아요 수, 이미지를 함께 조회
-- Hibernate SQL 로그 기반으로 실제 쿼리 실행 수를 분석하고 튜닝
-- 게시글 및 댓글 조회 시 작성자 정보를 즉시 로딩해 Lazy 로딩 예외 방지
+**기술적 차별성**
 
-### 2. 커서 기반 페이지네이션
-- createdAt 기준 커서 방식 도입으로 무한 스크롤 UX 대응
-- OFFSET 기반 성능 저하 문제 해결
+- `Soft Delete + 복구 + 자동 익명화` 흐름을 포함한 회원 탈퇴 구조
+- `Redis + Bloom Filter` 기반 JWT 블랙리스트 처리
+- `@EntityGraph + BatchSize` 조합으로 N+1 병목 해결
+- 커서 기반 무한스크롤 조회 + 이미지 순서 조정 기능
 
-### 3. 이미지/댓글 Soft Delete 및 최소 UPDATE 처리
-- `isDeleted` 플래그와 `deletedAt` 타임스탬프를 적용하여 데이터 복구 가능성 확보
-- 불필요한 DELETE & INSERT를 줄이고 필요한 필드만 업데이트
+---
 
-### 4. 로그아웃 보안 강화
-- Bloom Filter + Redis TTL 조합으로 Access Token 블랙리스트 구현
-- Redis 키 조회 없이도 빠르게 유효성 판단 및 메모리 효율 확보
+## 2. 기술 스택 (Tech Stack)
 
-## 주요 설계/개선 고민
-| 문제                                | 해결                                             |
-|-----------------------------------|------------------------------------------------|
-| JPA에서 연관 데이터 조회 시 다수의 쿼리 발생 (N+1) | `@EntityGraph`, `@BatchSize`로 즉시 로딩 처리         |
-| 댓글/이미지의 계층 구조 or 중복 조회            | Stream API + HashMap 계층 매핑 + Soft Delete 처리    |
-| 게시글 수정 시 이미지 전체 삭제/재등록            | 기존 이미지 유지 + 필요한 항목만 Soft Delete/Insert         |
-| 탈퇴한 회원의 이메일이 유니크 제약을 방해함          | `deleted_이메일_UUID` 방식으로 식별자 고유성 확보             |
-| Access Token 무효화 처리 어려움           | Redis Bloom Filter + TTL로 블랙리스트 구현             |
-| 탈퇴한 회원의 게시글/댓글 Lazy 로딩 예외 발생 가능   | `@EntityGraph(attributePaths = {"member"})` 적용 |
+```
+Language: Java 21
+Framework: Spring Boot 3.4.3
+ORM: Hibernate, Spring Data JPA
+Security: Spring Security, JWT
+Infra: Redis (Token Blacklist, Bloom Filter)
+Database: MySQL 8.0.41
+Build: Gradle
+Test: JUnit5, Mockito, JaCoCo
+Cloud (예정): AWS S3, CloudFront (이미지 업로드 및 정적 리소스)
+```
 
-## 예외 및 테스트 케이스 설계
-- 커스텀 예외 코드 (ErrorCode) 기반 글로벌 예외 처리
-- JWT 토큰 오류, 유효하지 않은 입력값, DB 조회 실패 등 주요 에러 명확하게 응답
-- Hibernate SQL 로그 분석 기반으로 기능별 쿼리 흐름 검증
+---
 
-## 향후 개선 사항
-- 이미지 업로드 → AWS S3 또는 CloudFront CDN 적용
-- 캐싱 전략 → Redis 활용한 조회수/좋아요 수/인기글 캐싱
-- Kafka, Event 기반 비동기 처리 → 조회수/좋아요 기록 로그 처리
-- 관리자 기능 → 탈퇴 회원 복구 UI 및 관리 도구 연동
+## 3. 시스템 아키텍처 (Architecture)
 
-<details markdown="1">
-  <summary>마무리 및 느낀 점</summary>
-  <div>
-    <ul>
-      <li>이 프로젝트는 단순한 CRUD 구현을 넘어, 성능과 구조, 보안, 사용자 경험을 모두 고려하며 실무적인 관점에서 고민한 작업이었습니다.</li>
-      <li>JPA 최적화, 계층 구조 설계, 트랜잭션 처리, Redis 블랙리스트 구축 등, 단기간의 실습이 아닌 실제 서비스 개발을 목표로 설계·개발·테스트를 반복했습니다.</li>
-      <li>앞으로도 "왜 이렇게 설계해야 하는가?"를 고민하는 개발자로서 성장을 이어가겠습니다.</li>
-    </ul>
-  </div>
-</details>
+- **레이어드 아키텍처**: Controller → Service → Repository
+- **토큰 인증 흐름**: JWT + Refresh 토큰 + Redis 블랙리스트
+- **소프트 삭제**: deletedAt 기반 + 복구 로직
+- **댓글/이미지 계층 구조**: depth 1 제한 구조, 순서 조정 지원
+
+---
+
+## 4. 주요 기능 (Core Features)
+
+### 회원 기능
+
+- 소셜/이메일 기반 회원가입 및 로그인
+- JWT 인증 / 로그아웃 / 토큰 재발급
+- 프로필 이미지 등록 및 수정
+- Soft Delete 기반 탈퇴 → 30일 후 자동 익명화 및 복구 지원
+
+### 게시글 기능
+
+- 게시글 작성/조회/수정/삭제 (이미지 포함)
+- 커서 기반 페이지네이션
+- 좋아요 개수 조회 최적화 (분리 API, 캐시 구조 예정)
+
+### 댓글 및 좋아요
+
+- 댓글/대댓글 계층 구조 (depth 1)
+- Soft Delete 및 작성자 정보 마스킹
+- 좋아요 토글 방식 구현 및 Soft Delete 적용
+
+---
+
+## 5. 성능 최적화 및 트러블슈팅
+
+### N+1 병목 제거
+
+- `@EntityGraph`, `@BatchSize`, `@Formula`를 활용해 조회 최적화
+- SQL 로그 기반 실행 쿼리 수 추적 및 병목 튜닝
+
+### 커서 기반 페이지네이션
+
+- OFFSET → 커서 방식으로 전환 → 무한스크롤 대응 + 성능 개선
+
+### 토큰 보안 구조
+
+- Redis + Bloom Filter 조합으로 AccessToken 블랙리스트 처리
+- TTL 설정으로 메모리 효율 확보 및 빠른 조회
+
+---
+
+## 6. API 문서 (Docs)
+
+- [🔗 Swagger 문서 바로가기 (추후 적용)](https://github.com/seplease/community/docs)
+- 주요 예외 응답 형식:
+
+```json
+{
+  "status": 400,
+  "message": "닉네임은 2~20자여야 합니다.",
+  "data": null
+}
+```
+
+- API 설계 방식: RESTful + HTTP 상태 코드 준수 + 명확한 URI 규칙 (`/api/posts`, `/api/comments`, `/api/auth`)
+
+---
+
+## 7. 테스트 및 보안 구조
+
+- 테스트 방식: 단위 테스트 + 통합 테스트 + 보안 흐름 검증
+- `@WithMockUser` 기반 인증 시나리오 검증
+- JWT 예외, 복구, 중복 검증까지 커버
+- 테스트 커버리지: `전체 80% 이상` 확보 (JaCoCo 기준)
+
+---
+
+## 8. 배포 및 운영
+
+- 현재는 로컬 기반 개발
+- 향후 AWS 기반 인프라 이전 예정:
+    - 이미지 → S3
+    - CI/CD → GitHub Actions → ECR → ECS
+    - 환경 분리: `dev`, `prod`
+
+---
+
+## 9. 실행 방법 / 로컬 실행 가이드
+
+```bash
+git clone https://github.com/seplease/community.git
+cd community
+./gradlew bootRun
+```
+
+- 필요 환경:
+    - Java 21
+    - MySQL 8.x (로컬)
+    - Redis 서버 실행 필요 (`localhost:6379`)
+- `.env.example` 제공 예정
+
+---
+
+## 10. 프로젝트 회고 / 느낀 점
+
+> 이 프로젝트는 단순한 CRUD 구현을 넘어 인증, 보안, 트랜잭션, 성능 최적화 등 서비스 전반을 고려하여 설계·개발한 경험이었습니다.
+>
+>
+> 특히, JWT 기반 인증 흐름, Soft Delete 및 복구 처리, Redis 기반 토큰 무효화 설계 등을 통해 실무에서 빈번하게 마주하는 이슈를 직접 해결하며 백엔드 설계 역량을 높일 수 있었습니다.
+>
+> 앞으로도 설계 의도를 설명할 수 있는 개발자, 사용자와 비즈니스 요구를 동시에 고려하는 백엔드 엔지니어로 성장하고자 합니다.
+>
